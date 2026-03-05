@@ -21,27 +21,47 @@ Written in strict TypeScript. No runtime dependencies — Node.js built-ins only
 ```
 src/
 ├── index.ts              # Entry point + command router
-├── core/                 # Config, state, memory, logging, cost, secrets, hooks, snapshots
+├── core/                 # Config, state, memory, vectors, ledger, logging, cost, secrets, hooks, snapshots
 ├── engines/              # Engine registry (7 engines) + process runner
 ├── prompts/              # Token-aware prompt builder with diff and cleaning
 ├── cli/                  # CLI commands (cron, setup, personai, memory, audit, etc.)
 └── utils/                # Terminal helpers, notifications
+tests/                    # Vitest test suite (27 files, 247 tests, ~93% coverage)
 ```
 
 Key patterns:
 - Config cascade: CLI args → project `.cliclaw/config.json` → env vars → defaults
+- **`engines` array is the primary config unit** — first entry is primary, all are used for rotation and parallel execution
+- Each engine entry has `engine`, `model`, optional `alias` (required for duplicates), optional `focus`
 - Lazy initialization (e.g. readline only created when interactive input is needed)
-- Engine registry pattern: each engine defines `command`, `buildArgs`, `stdinPrompt`, `defaultModel`
+- Engine registry pattern: each engine defines `command`, `buildArgs`, `stdinPrompt`, `model`, `lenientExit`
 - Prompt builder strips boilerplate, demotes headers, skips template-only sections, scans for secrets
+- Parallel execution uses a file-based task ledger (`src/core/ledger.ts`) for engine coordination
+- Semantic memory search via TF-IDF vectors (`src/core/vectors.ts`), no external APIs
+
+### Config Format
+
+```json
+{
+  "engines": [
+    { "engine": "kiro", "model": "claude-opus-4.6" },
+    { "engine": "claude", "model": "claude-sonnet-4-20250514" }
+  ],
+  "tokenBudget": 8000,
+  "maxConcurrent": 2,
+  "hooks": { "preCycle": [], "postCycle": [], "onSuccess": [], "onFailure": [] }
+}
+```
 
 ## Conventions
 
 - Entry point is `src/index.ts` with a command router dispatching to `src/cli/*.ts` handlers
 - All types live in `src/core/types.ts`
 - State is JSON-backed (`.cliclaw/state/`), snapshots for rollback
-- Logging is dual: human-readable `.log` + machine-readable `.jsonl`
+- Logging is dual: human-readable `.log` + machine-readable `.jsonl` in `.cliclaw/logs/`
 - Meta files (`.cliclaw/meta/`) follow priority: memory → you → projects → personai
 - The Makefile is the development interface; installed users use the `cliclaw` binary directly
+- Tests use vitest in `tests/` directory, run with `npm test`
 
 ## Do NOT
 
@@ -51,3 +71,4 @@ Key patterns:
 - Create files over 1000 lines
 - Modify meta file templates without updating the prompt builder's cleaning logic
 - Break the config cascade order (CLI > project config > env > defaults)
+- Use top-level `engine`/`model` in config — always use the `engines` array

@@ -50,16 +50,41 @@ Describe who you are so the AI agent understands your context.
 function initProjectsFile(path: string): void {
   if (existsSync(path)) return;
   mkdirSync(dirname(path), { recursive: true });
-  writeFileSync(path, `# Active Projects
+  writeFileSync(path, `# Projects
 
-List your active projects so the AI agent knows what to focus on.
+<!-- Describe your project structure, build commands, and conventions here. -->
+<!-- The AI agent reads this file to understand how your codebase is organized. -->
+<!-- Example below — replace with your own project details. -->
 
-## Project 1
-- **Name**: 
-- **Path**: 
-- **Description**: 
-- **Priority**: high | medium | low
-- **Status**: active | paused | done
+In my project we will have a \`./products/{name}/backend\` folder and a \`./products/{name}/frontend\` folder, and a \`Makefile\` to build and run the project.
+
+Folder Structure:
+
+- .cliclaw/
+- products/
+  - {name}/
+    - backend/
+    - frontend/
+- Makefile
+- .gitignore
+
+## Makefile
+
+\`make dev-fe {product-name}\` - will run the frontend development server
+\`make dev-be {product-name}\` - will run the backend development server
+\`make build-fe {product-name}\` - will build the frontend
+\`make build-be {product-name}\` - will build the backend
+
+<!-- Add more commands and conventions as needed -->
+
+## .gitignore
+
+\`\`\`
+.cliclaw/cliclaw.lockdir/
+.cliclaw/logs/
+.cliclaw/tmp/
+.cliclaw/snapshots/
+\`\`\`
 `);
 }
 
@@ -254,7 +279,7 @@ export async function setupCommand(_args: string[]): Promise<void> {
   console.log("\n✅ Setup complete!\n");
   console.log("Next steps:");
   console.log("  1. Edit .cliclaw/meta/you.md — tell the AI about yourself");
-  console.log("  2. Edit .cliclaw/meta/projects.md — list your active projects");
+  console.log("  2. Edit .cliclaw/meta/projects.md — describe your project structure and build commands");
   console.log("  3. Run `cliclaw personai` — configure AI persona interactively");
   console.log("  4. Run `cliclaw cron` — start the autonomous loop");
   if (engineEntries.length > 1) {

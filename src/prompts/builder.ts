@@ -46,10 +46,7 @@ function isOnlyTemplate(cleaned: string): boolean {
   const meaningful = cleaned
     .split("\n")
     .filter((l) => l.trim() !== "")
-    .filter((l) => !l.startsWith("##"))
-    // Filter out lines that are just placeholder values like "high | medium | low"
-    .filter((l) => !l.match(/^\s*-\s+\*\*\w+\*\*:\s*(high|medium|low|active|paused|done)/i))
-    .filter((l) => !l.match(/^(high|medium|low)\s*\|\s*/i));
+    .filter((l) => !l.startsWith("##"));
   return meaningful.length === 0;
 }
 
@@ -105,7 +102,7 @@ export function buildPrompt(config: ClawConfig, enableDiff = false): string {
 
   // Projects
   if (projectsRaw && !isOnlyTemplate(projectsRaw)) {
-    parts.push("\n## Active Projects\n" + diffAwareSection(projectsRaw, "Projects", budgets.projects, lastHash));
+    parts.push("\n## Projects\n" + diffAwareSection(projectsRaw, "Projects", budgets.projects, lastHash));
   }
 
   // Persona

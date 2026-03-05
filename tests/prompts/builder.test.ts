@@ -110,9 +110,9 @@ describe("buildPrompt", () => {
 
   it("includes projects when present", () => {
     const config = makeConfig();
-    writeFileSync(config.paths.projectsFile, "## MyProject\n- **Name**: MyApp\n- **Path**: /app\n- **Description**: A web app\n- **Priority**: high\n- **Status**: active");
+    writeFileSync(config.paths.projectsFile, "## Folder Structure\n\n```\n- src/\n- tests/\n```\n\n## Build & Run\n\n`make dev` - start the dev server");
     const prompt = buildPrompt(config);
-    expect(prompt).toContain("Active Projects");
+    expect(prompt).toContain("## Projects");
   });
 
   it("includes personai when present", () => {

@@ -38,10 +38,13 @@ cliclaw setup            Interactive setup wizard
 cliclaw personai         Configure AI persona (tone, expertise, style)
 cliclaw memory           View and optimize persistent memory
 cliclaw memory search    Search through memory entries
+cliclaw memory search --semantic  Semantic search using vector similarity
+cliclaw memory reindex   Rebuild the vector index from MEMORY.md
 cliclaw status           Show state, cost, and stats
 cliclaw audit [n]        Audit report from logs
 cliclaw rollback         Restore state from a snapshot
 cliclaw logs [n]         View recent log entries
+cliclaw logs --tail      Live-tail the log file
 cliclaw clean            Remove temp files
 cliclaw upgrade          Upgrade to the latest version
 cliclaw help             Show all commands
@@ -52,9 +55,35 @@ cliclaw help             Show all commands
 ```bash
 cliclaw cron --engine claude       # Use a specific engine
 cliclaw cron --dry-run             # Preview prompts without running agents
-cliclaw cron --parallel            # Run multiple engines simultaneously
-cliclaw cron "fix auth bugs"       # Focus on a specific task
+cliclaw cron --parallel            # Run all configured engines simultaneously
+cliclaw cron --focus "fix auth"    # Focus on a specific task
+cliclaw cron --max-loop 10         # Limit cycle count
+cliclaw cron --sleep 30            # Set sleep interval between cycles
 ```
+
+## Configuration
+
+CLIClaw uses an `engines` array as the primary config unit. The first engine is the primary; all are available for parallel execution and rotation.
+
+```json
+{
+  "engines": [
+    { "engine": "kiro", "model": "claude-sonnet-4.6", "alias": "kiro1" },
+    { "engine": "kiro", "model": "claude-sonnet-4.6", "alias": "kiro2" },
+    { "engine": "cursor", "model": "gpt-5.2-high" }
+  ],
+  "tokenBudget": 8000,
+  "maxConcurrent": 2,
+  "hooks": {
+    "preCycle": [],
+    "postCycle": [],
+    "onSuccess": ["npm run lint"],
+    "onFailure": []
+  }
+}
+```
+
+When you have duplicate engines (e.g. two kiro instances), give each a unique `alias`. The setup wizard handles this automatically.
 
 ## Supported Engines
 
@@ -92,7 +121,7 @@ cliclaw cron "fix auth bugs"       # Focus on a specific task
 > }
 > ```
 >
- Then set it up as the default agent using in your kiro-cli
+> Then set it up as the default agent using in your kiro-cli.
 >
 > See [kiro#6163](https://github.com/kirodotdev/Kiro/issues/6163) for details.
 
@@ -102,8 +131,17 @@ cliclaw cron "fix auth bugs"       # Focus on a specific task
 2. **Prompt building** — Each cycle, CLIClaw composes a token-aware prompt from your memory, persona, project context, and task focus.
 3. **Agent execution** — The prompt is sent to your chosen AI CLI engine, which works on the codebase.
 4. **Progress tracking** — CLIClaw monitors output, tracks costs, detects stalls, and saves state snapshots.
-5. **Adaptation** — On repeated failures, it backs off with longer sleep intervals and rotates to a different engine.
+5. **Adaptation** — On repeated failures, it backs off with longer sleep intervals and rotates to the next configured engine.
 6. **Loop** — Repeat until the max cycle count is reached or you stop it.
+
+## Testing
+
+```bash
+npm test                # Run all tests
+npm run test:coverage   # Run with coverage report
+```
+
+247 tests across 27 test files. Coverage: ~93% statements, ~95% lines.
 
 ## Upgrade
 
@@ -133,6 +171,7 @@ cd cliclaw
 npm install
 make dev help         # Run any command from source
 make build            # Compile TypeScript
+npm test              # Run tests
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines and [DETAILED.md](DETAILED.md) for full technical documentation.
