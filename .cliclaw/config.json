@@ -1,0 +1,42 @@
+{
+  "engines": [
+    {
+      "engine": "kiro",
+      "model": "claude-sonnet-4.6"
+    }
+  ],
+  "tokenBudget": 0,
+  "maxLoop": 500,
+  "maxConsecutiveFailures": 5,
+  "sleepNormal": 1800,
+  "sleepAfterFailure": 90,
+  "agentTimeout": 86400,
+  "freshSessionEvery": 3,
+  "maxConcurrent": 2,
+  "idleBeforeStart": 0,
+  "snapshotEvery": 4,
+  "engineRotateAfter": 3,
+  "stallMax": 10,
+  "stallBackoffMultiplier": 1.5,
+  "stallBackoffCap": 10,
+  "hookTimeout": 60000,
+  "maxSnapshots": 20,
+  "promptBudgets": {
+    "memory": 500,
+    "you": 400,
+    "projects": 600,
+    "boundaries": 200,
+    "identity": 200,
+    "tools": 300,
+    "boot": 300
+  },
+  "memoryMaxLines": 1100,
+  "memoryKeepHead": 80,
+  "memoryKeepTail": 850,
+  "hooks": {
+    "preCycle": [],
+    "postCycle": [],
+    "onSuccess": [],
+    "onFailure": []
+  }
+}

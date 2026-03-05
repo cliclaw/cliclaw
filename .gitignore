@@ -1,6 +1,11 @@
 node_modules/
 dist/
-.cliclaw/
 *.tmp
 *.tmp.*
 project.md
+
+.cliclaw/cliclaw.lockdir/
+.cliclaw/logs/
+.cliclaw/tmp/
+.cliclaw/snapshots/
+.cliclaw/state/
