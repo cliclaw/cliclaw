@@ -172,4 +172,52 @@ describe("setupCommand", () => {
     const config = JSON.parse(readFileSync(paths.configFile, "utf-8"));
     expect(config.tokenBudget).toBe(0);
   });
+
+  it("writes all config fields to config.json with correct values", async () => {
+    let askCount = 0;
+    mockAsk.mockImplementation(() => {
+      askCount++;
+      const answers: Record<number, string> = {
+        1: "1",     // instance count
+        2: "",      // model (default)
+        3: "4000",  // token budget
+      };
+      return Promise.resolve(answers[askCount] ?? "");
+    });
+
+    await setupCommand([]);
+
+    const paths = buildPaths(testDir);
+    const config = JSON.parse(readFileSync(paths.configFile, "utf-8"));
+
+    // Dynamic value we provided
+    expect(config.tokenBudget).toBe(4000);
+
+    // All fields must be explicitly present — no hidden defaults
+    expect(config.maxLoop).toBe(500);
+    expect(config.maxConsecutiveFailures).toBe(5);
+    expect(config.sleepNormal).toBe(60);
+    expect(config.sleepAfterFailure).toBe(90);
+    expect(config.agentTimeout).toBe(86400);
+    expect(config.freshSessionEvery).toBe(3);
+    expect(config.maxConcurrent).toBe(2);
+    expect(config.idleBeforeStart).toBe(0);
+    expect(config.snapshotEvery).toBe(4);
+    expect(config.engineRotateAfter).toBe(3);
+    expect(config.stallMax).toBe(10);
+    expect(config.stallBackoffMultiplier).toBe(1.5);
+    expect(config.stallBackoffCap).toBe(10);
+    expect(config.hookTimeout).toBe(60000);
+    expect(config.maxSnapshots).toBe(20);
+    expect(config.memoryMaxLines).toBe(1100);
+    expect(config.memoryKeepHead).toBe(80);
+    expect(config.memoryKeepTail).toBe(850);
+    expect(config.promptBudgets).toEqual({
+      memory: 500, you: 400, projects: 600,
+      boundaries: 200, identity: 200, tools: 300, boot: 300,
+    });
+    expect(config.hooks).toBeDefined();
+    expect(config.engines).toBeDefined();
+    expect(config.engines.length).toBeGreaterThan(0);
+  });
 });

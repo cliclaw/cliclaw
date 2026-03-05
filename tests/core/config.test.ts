@@ -211,6 +211,22 @@ describe("resolveConfig", () => {
     expect(config.hooks.onSuccess).toEqual(["echo ok"]);
   });
 
+  it("reads maxConsecutiveFailures from project config", () => {
+    const paths = buildPaths(testDir);
+    ensureAllDirs(paths);
+    writeFileSync(paths.configFile, JSON.stringify({ maxConsecutiveFailures: 10 }));
+    const config = resolveConfig({ projectRoot: testDir });
+    expect(config.maxConsecutiveFailures).toBe(10);
+  });
+
+  it("reads maxLoop from project config", () => {
+    const paths = buildPaths(testDir);
+    ensureAllDirs(paths);
+    writeFileSync(paths.configFile, JSON.stringify({ maxLoop: 42 }));
+    const config = resolveConfig({ projectRoot: testDir });
+    expect(config.maxLoop).toBe(42);
+  });
+
   it("reads maxConcurrent from project config", () => {
     const paths = buildPaths(testDir);
     ensureAllDirs(paths);

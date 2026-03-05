@@ -5,7 +5,7 @@
 import { existsSync, writeFileSync, mkdirSync } from "node:fs";
 import { execSync } from "node:child_process";
 import { dirname } from "node:path";
-import { resolveConfig, ALL_ENGINES, getDefaultModel, ensureAllDirs } from "../core/config.js";
+import { resolveConfig, ALL_ENGINES, getDefaultModel, ensureAllDirs, CONFIG_DEFAULTS } from "../core/config.js";
 import { initMemory } from "../core/memory.js";
 import { ask, multiSelect, confirm, closePrompt } from "../utils/prompt.js";
 import type { EngineName, EngineEntry, ProjectConfig } from "../core/types.js";
@@ -285,12 +285,27 @@ export async function setupCommand(_args: string[]): Promise<void> {
   const projectConfig: ProjectConfig = {
     engines: engineEntries,
     tokenBudget,
+    maxLoop: CONFIG_DEFAULTS.maxLoop,
+    maxConsecutiveFailures: CONFIG_DEFAULTS.maxConsecutiveFailures,
+    sleepNormal: CONFIG_DEFAULTS.sleepNormal,
+    sleepAfterFailure: CONFIG_DEFAULTS.sleepAfterFailure,
+    agentTimeout: CONFIG_DEFAULTS.agentTimeout,
+    freshSessionEvery: CONFIG_DEFAULTS.freshSessionEvery,
+    maxConcurrent: engineEntries.length > 1 ? Math.min(engineEntries.length, 3) : CONFIG_DEFAULTS.maxConcurrent,
+    idleBeforeStart: CONFIG_DEFAULTS.idleBeforeStart,
+    snapshotEvery: CONFIG_DEFAULTS.snapshotEvery,
+    engineRotateAfter: CONFIG_DEFAULTS.engineRotateAfter,
+    stallMax: CONFIG_DEFAULTS.stallMax,
+    stallBackoffMultiplier: CONFIG_DEFAULTS.stallBackoffMultiplier,
+    stallBackoffCap: CONFIG_DEFAULTS.stallBackoffCap,
+    hookTimeout: CONFIG_DEFAULTS.hookTimeout,
+    maxSnapshots: CONFIG_DEFAULTS.maxSnapshots,
+    promptBudgets: { ...CONFIG_DEFAULTS.promptBudgets },
+    memoryMaxLines: CONFIG_DEFAULTS.memoryMaxLines,
+    memoryKeepHead: CONFIG_DEFAULTS.memoryKeepHead,
+    memoryKeepTail: CONFIG_DEFAULTS.memoryKeepTail,
     hooks,
   };
-
-  if (engineEntries.length > 1) {
-    projectConfig.maxConcurrent = Math.min(engineEntries.length, 3);
-  }
 
   const writeConfig = await confirm(`Write config to ${paths.configFile}?`);
   if (writeConfig) {

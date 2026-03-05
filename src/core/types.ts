@@ -163,7 +163,11 @@ export interface ModelPricing {
 export interface ProjectConfig {
   engines?: EngineEntry[];
   maxLoop?: number;
+  maxConsecutiveFailures?: number;
   sleepNormal?: number;
+  sleepAfterFailure?: number;
+  agentTimeout?: number;
+  freshSessionEvery?: number;
   tokenBudget?: number;
   maxConcurrent?: number;
   hooks?: HooksConfig;
