@@ -48,14 +48,14 @@ export function readFullMemory(memoryFile: string): string {
   return readFileSync(memoryFile, "utf-8");
 }
 
-export function appendToMemory(memoryFile: string, entry: string): void {
+export function appendToMemory(memoryFile: string, entry: string, maxLines = MAX_LINES, keepHead = KEEP_HEAD, keepTail = KEEP_TAIL): void {
   if (!entry.trim()) return;
   const now = new Date().toISOString().slice(0, 16).replace("T", " ");
   const block = `\n## ${now} — agent\n${entry}\n`;
   try {
     const existing = existsSync(memoryFile) ? readFileSync(memoryFile, "utf-8") : MEMORY_TEMPLATE;
     writeFileSync(memoryFile, existing + block);
-    trimMemory(memoryFile);
+    trimMemory(memoryFile, maxLines, keepHead, keepTail);
     indexMemoryEntry(dirname(memoryFile), entry, new Date().toISOString());
     logInfo("Appended to MEMORY.md");
   } catch {
@@ -63,13 +63,13 @@ export function appendToMemory(memoryFile: string, entry: string): void {
   }
 }
 
-export function trimMemory(memoryFile: string): void {
+export function trimMemory(memoryFile: string, maxLines = MAX_LINES, keepHead = KEEP_HEAD, keepTail = KEEP_TAIL): void {
   if (!existsSync(memoryFile)) return;
   const lines = readFileSync(memoryFile, "utf-8").split("\n");
-  if (lines.length <= MAX_LINES) return;
+  if (lines.length <= maxLines) return;
 
-  const head = lines.slice(0, KEEP_HEAD);
-  const tail = lines.slice(-KEEP_TAIL);
+  const head = lines.slice(0, keepHead);
+  const tail = lines.slice(-keepTail);
   writeFileSync(memoryFile, [...head, "", "<!-- trimmed -->", "", ...tail].join("\n"));
   logInfo(`Trimmed MEMORY.md (was ${lines.length} lines)`);
 }

@@ -62,6 +62,28 @@ export interface ClawConfig {
   /** Plugin hooks */
   hooks: HooksConfig;
   paths: ClawPaths;
+  /** How often (in cycles) to save a state snapshot */
+  snapshotEvery: number;
+  /** Consecutive failures before rotating to next engine */
+  engineRotateAfter: number;
+  /** Stall cycles before declaring a stall */
+  stallMax: number;
+  /** Backoff multiplier per stall cycle (sleep *= multiplier^stallCycles, capped at stallBackoffCap) */
+  stallBackoffMultiplier: number;
+  /** Maximum backoff multiplier cap */
+  stallBackoffCap: number;
+  /** Hook execution timeout in ms */
+  hookTimeout: number;
+  /** Max state snapshots to keep */
+  maxSnapshots: number;
+  /** Per-section prompt token budgets */
+  promptBudgets: { memory: number; you: number; projects: number; personai: number; boundaries: number };
+  /** Memory trim: max lines before trimming */
+  memoryMaxLines: number;
+  /** Memory trim: lines to keep from the top */
+  memoryKeepHead: number;
+  /** Memory trim: lines to keep from the bottom */
+  memoryKeepTail: number;
 }
 
 export interface HooksConfig {
@@ -75,7 +97,6 @@ export interface ClawPaths {
   logFile: string;
   logJsonl: string;
   stateFile: string;
-  heartbeatFile: string;
   memoryFile: string;
   boundariesFile: string;
   lockDir: string;
@@ -141,4 +162,15 @@ export interface ProjectConfig {
   tokenBudget?: number;
   maxConcurrent?: number;
   hooks?: HooksConfig;
+  snapshotEvery?: number;
+  engineRotateAfter?: number;
+  stallMax?: number;
+  stallBackoffMultiplier?: number;
+  stallBackoffCap?: number;
+  hookTimeout?: number;
+  maxSnapshots?: number;
+  promptBudgets?: { memory?: number; you?: number; projects?: number; personai?: number; boundaries?: number };
+  memoryMaxLines?: number;
+  memoryKeepHead?: number;
+  memoryKeepTail?: number;
 }

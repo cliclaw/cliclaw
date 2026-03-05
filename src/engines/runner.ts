@@ -76,9 +76,13 @@ function spawnAgent(
     const pid = child.pid;
     if (pid) currentAgentPids.push(pid);
 
+    // Truncate cycleOut at start of cycle so --tail sees only current run
+    try { writeFileSync(config.paths.cycleOut, ""); } catch { /* ignore */ }
+
     child.stdout?.on("data", (chunk: Buffer) => {
       const text = chunk.toString();
       stdout += text;
+      try { appendFileSync(config.paths.cycleOut, text); } catch { /* ignore */ }
     });
     child.stderr?.on("data", (chunk: Buffer) => { stderr += chunk.toString(); });
 
@@ -119,7 +123,6 @@ function spawnAgent(
       const parsedOutput = engine.parseOutput ? engine.parseOutput(stdout) : stdout;
 
       try {
-        writeFileSync(config.paths.cycleOut, parsedOutput);
         writeFileSync(config.paths.cycleErr, stderr);
         appendFileSync(config.paths.logFile, parsedOutput + "\n");
       } catch { /* ignore */ }

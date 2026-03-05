@@ -42,7 +42,6 @@ export function buildPaths(projectRoot: string): ClawPaths {
     logFile: join(base, "logs", "autonomous.log"),
     logJsonl: join(base, "logs", "autonomous.jsonl"),
     stateFile: join(base, "state", "cliclaw-state.json"),
-    heartbeatFile: join(base, "state", "HEARTBEAT.md"),
     memoryFile: join(base, "memory", "MEMORY.md"),
     boundariesFile: join(base, "memory", "BOUNDARIES.md"),
     lockDir: join(base, "cliclaw.lockdir"),
@@ -139,6 +138,23 @@ export function resolveConfig(overrides: Partial<ClawConfig> = {}): ClawConfig {
     tokenBudget: projectCfg.tokenBudget ?? envInt("CLICLAW_TOKEN_BUDGET", 8000),
     hooks: projectCfg.hooks ?? DEFAULT_HOOKS,
     paths,
+    snapshotEvery: projectCfg.snapshotEvery ?? 4,
+    engineRotateAfter: projectCfg.engineRotateAfter ?? 3,
+    stallMax: projectCfg.stallMax ?? 10,
+    stallBackoffMultiplier: projectCfg.stallBackoffMultiplier ?? 1.5,
+    stallBackoffCap: projectCfg.stallBackoffCap ?? 10,
+    hookTimeout: projectCfg.hookTimeout ?? 60_000,
+    maxSnapshots: projectCfg.maxSnapshots ?? 20,
+    promptBudgets: {
+      memory: projectCfg.promptBudgets?.memory ?? 500,
+      you: projectCfg.promptBudgets?.you ?? 400,
+      projects: projectCfg.promptBudgets?.projects ?? 600,
+      personai: projectCfg.promptBudgets?.personai ?? 300,
+      boundaries: projectCfg.promptBudgets?.boundaries ?? 200,
+    },
+    memoryMaxLines: projectCfg.memoryMaxLines ?? 1100,
+    memoryKeepHead: projectCfg.memoryKeepHead ?? 80,
+    memoryKeepTail: projectCfg.memoryKeepTail ?? 850,
   };
 }
 

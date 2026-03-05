@@ -60,6 +60,38 @@ function parseGeminiOutput(stdout: string): string {
   return stdout;
 }
 
+/**
+ * Try to extract displayable text from a single raw stdout line (stream-json formats).
+ * Returns the text string if found, null if the line has no displayable content.
+ */
+export function parseStreamLine(line: string): string | null {
+  if (!line.trim()) return null;
+  try {
+    const obj = JSON.parse(line) as Record<string, unknown>;
+    // cursor: full assistant message (has model_call_id) — complete, add newline
+    if (obj["type"] === "assistant" && obj["model_call_id"]) {
+      const msg = obj["message"] as { content?: Array<{ type: string; text?: string }> } | undefined;
+      const text = msg?.content?.filter((c) => c.type === "text").map((c) => c.text ?? "").join("") ?? "";
+      return text ? text + "\n" : null;
+    }
+    // cursor: streaming delta — fragment, no newline
+    if (obj["type"] === "assistant" && !obj["model_call_id"]) {
+      const msg = obj["message"] as { content?: Array<{ type: string; text?: string }> } | undefined;
+      return msg?.content?.filter((c) => c.type === "text").map((c) => c.text ?? "").join("") || null;
+    }
+    // claude: text_delta — fragment, no newline
+    if (obj["type"] === "stream_event") {
+      const event = obj["event"] as { delta?: { type?: string; text?: string } } | undefined;
+      return event?.delta?.type === "text_delta" ? (event.delta.text ?? null) : null;
+    }
+    // claude: result line — complete, add newline
+    if (obj["type"] === "result" && typeof obj["result"] === "string") return (obj["result"] as string) + "\n";
+    return null;
+  } catch { /* plain text line */ }
+  // plain text (kiro, aider, codex, copilot) — add newline
+  return line + "\n";
+}
+
 const engines: Record<EngineName, EngineConfig> = {
   kiro: {
     name: "kiro",

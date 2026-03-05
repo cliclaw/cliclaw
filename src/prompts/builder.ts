@@ -83,7 +83,7 @@ export function buildPrompt(config: ClawConfig, enableDiff = false): string {
   const lastSuccess = readState("lastSuccess") ?? "never";
   const lastHash = enableDiff ? (readState("lastPromptHash") as string | undefined) : undefined;
 
-  const budgets = { memory: 500, you: 400, projects: 600, personai: 300, boundaries: 200 };
+  const budgets = config.promptBudgets;
   const parts: string[] = [];
 
   // Header

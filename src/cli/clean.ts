@@ -42,15 +42,6 @@ export async function cleanCommand(_args: string[]): Promise<void> {
     }
   }
 
-  // Ask about heartbeat
-  if (existsSync(paths.heartbeatFile)) {
-    const cleanHb = await confirm("Remove heartbeat file?", false);
-    if (cleanHb) {
-      rmSync(paths.heartbeatFile, { force: true });
-      console.log("  ✓ Removed heartbeat");
-    }
-  }
-
   console.log("\n✅ Clean complete.\n");
   closePrompt();
 }

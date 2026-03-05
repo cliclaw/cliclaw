@@ -6,7 +6,7 @@ import { execSync } from "node:child_process";
 import { logInfo, logWarn } from "./logger.js";
 import type { HooksConfig } from "./types.js";
 
-export function runHooks(hooks: string[], phase: string, cwd: string, env: Record<string, string> = {}): void {
+export function runHooks(hooks: string[], phase: string, cwd: string, env: Record<string, string> = {}, timeout = 60_000): void {
   if (hooks.length === 0) return;
 
   for (const hook of hooks) {
@@ -15,7 +15,7 @@ export function runHooks(hooks: string[], phase: string, cwd: string, env: Recor
       execSync(hook, {
         cwd,
         stdio: "inherit",
-        timeout: 60_000,
+        timeout,
         env: { ...process.env, ...env },
       });
     } catch (err) {
@@ -25,20 +25,20 @@ export function runHooks(hooks: string[], phase: string, cwd: string, env: Recor
   }
 }
 
-export function runPreCycle(hooks: HooksConfig, cwd: string, cycle: number): void {
-  runHooks(hooks.preCycle, "pre-cycle", cwd, { CLICLAW_CYCLE: String(cycle) });
+export function runPreCycle(hooks: HooksConfig, cwd: string, cycle: number, timeout?: number): void {
+  runHooks(hooks.preCycle, "pre-cycle", cwd, { CLICLAW_CYCLE: String(cycle) }, timeout);
 }
 
-export function runPostCycle(hooks: HooksConfig, cwd: string, cycle: number): void {
-  runHooks(hooks.postCycle, "post-cycle", cwd, { CLICLAW_CYCLE: String(cycle) });
+export function runPostCycle(hooks: HooksConfig, cwd: string, cycle: number, timeout?: number): void {
+  runHooks(hooks.postCycle, "post-cycle", cwd, { CLICLAW_CYCLE: String(cycle) }, timeout);
 }
 
-export function runOnSuccess(hooks: HooksConfig, cwd: string, cycle: number): void {
-  runHooks(hooks.onSuccess, "on-success", cwd, { CLICLAW_CYCLE: String(cycle) });
+export function runOnSuccess(hooks: HooksConfig, cwd: string, cycle: number, timeout?: number): void {
+  runHooks(hooks.onSuccess, "on-success", cwd, { CLICLAW_CYCLE: String(cycle) }, timeout);
 }
 
-export function runOnFailure(hooks: HooksConfig, cwd: string, cycle: number): void {
-  runHooks(hooks.onFailure, "on-failure", cwd, { CLICLAW_CYCLE: String(cycle) });
+export function runOnFailure(hooks: HooksConfig, cwd: string, cycle: number, timeout?: number): void {
+  runHooks(hooks.onFailure, "on-failure", cwd, { CLICLAW_CYCLE: String(cycle) }, timeout);
 }
 
 export interface AgentSignals {

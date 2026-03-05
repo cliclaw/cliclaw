@@ -8,7 +8,7 @@ import { logInfo } from "./logger.js";
 
 const MAX_SNAPSHOTS = 20;
 
-export function saveSnapshot(snapshotsDir: string, stateFile: string, cycle: number): void {
+export function saveSnapshot(snapshotsDir: string, stateFile: string, cycle: number, maxSnapshots = MAX_SNAPSHOTS): void {
   mkdirSync(snapshotsDir, { recursive: true });
   if (!existsSync(stateFile)) return;
 
@@ -21,7 +21,7 @@ export function saveSnapshot(snapshotsDir: string, stateFile: string, cycle: num
     .filter((f) => f.startsWith("state-cycle-") && f.endsWith(".json"))
     .sort();
 
-  while (files.length > MAX_SNAPSHOTS) {
+  while (files.length > maxSnapshots) {
     const oldest = files.shift();
     if (oldest) {
       rmSync(join(snapshotsDir, oldest), { force: true });
