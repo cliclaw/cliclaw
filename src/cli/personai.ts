@@ -70,7 +70,7 @@ function buildIdentityContent(answers: Record<string, string>): string {
   return sections.join("\n");
 }
 
-export async function personaiCommand(_args: string[]): Promise<void> {
+export async function identityCommand(_args: string[]): Promise<void> {
   const config = resolveConfig();
   const identityFile = config.paths.identityFile;
   ensureAllDirs(config.paths);

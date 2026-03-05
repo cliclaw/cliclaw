@@ -6,7 +6,7 @@
  */
 
 import { cronCommand } from "./cli/cron.js";
-import { personaiCommand } from "./cli/personai.js";
+import { identityCommand } from "./cli/personai.js";
 import { memoryCommand } from "./cli/memory.js";
 import { setupCommand } from "./cli/setup.js";
 import { statusCommand } from "./cli/status.js";
@@ -26,7 +26,7 @@ Commands:
   cron [focus]           Start the autonomous agent loop
                          Options: --engine, --model, --dry-run, --parallel, --focus, --max-loop, --sleep
   setup                  Interactive setup wizard
-  personai               Configure AI persona interactively
+  identity               Configure agent identity interactively
   memory                 View and optimize persistent memory
   memory search <term>   Search through memory entries
   memory search <term> --semantic  Semantic search using vector similarity
@@ -48,7 +48,7 @@ type CommandFn = (args: string[]) => Promise<void>;
 const commands: Record<string, CommandFn> = {
   cron: cronCommand,
   setup: setupCommand,
-  personai: personaiCommand,
+  identity: identityCommand,
   memory: memoryCommand,
   status: statusCommand,
   clean: cleanCommand,

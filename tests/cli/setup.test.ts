@@ -157,4 +157,19 @@ describe("setupCommand", () => {
       expect(config.hooks).toBeDefined();
     }
   });
+
+  it("saves tokenBudget as 0 when user enters 0", async () => {
+    let callCount = 0;
+    mockAsk.mockImplementation(() => {
+      callCount++;
+      // instance count → "1", model → "", budget → "0"
+      return Promise.resolve(callCount === 3 ? "0" : "");
+    });
+
+    await setupCommand([]);
+
+    const paths = buildPaths(testDir);
+    const config = JSON.parse(readFileSync(paths.configFile, "utf-8"));
+    expect(config.tokenBudget).toBe(0);
+  });
 });

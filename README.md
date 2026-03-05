@@ -35,7 +35,7 @@ That's it. CLIClaw will continuously prompt your chosen AI engine to work on the
 ```bash
 cliclaw cron [focus]     Start the autonomous agent loop
 cliclaw setup            Interactive setup wizard
-cliclaw personai         Configure AI persona (tone, expertise, style)
+cliclaw identity         Configure agent identity (name, role, tone, expertise)
 cliclaw memory           View and optimize persistent memory
 cliclaw memory search    Search through memory entries
 cliclaw memory search --semantic  Semantic search using vector similarity
@@ -95,7 +95,7 @@ The AI can embed special signals in its response to control the loop:
 | `[SKIP CYCLE]`   | Skip hooks and sleep — nothing to do this cycle          |
 | `[STALL RESET]`  | Reset the stall/backoff counter — real progress was made |
 
-Teach your AI when to use them via `.cliclaw/meta/personai.md`. See [DETAILED.md](DETAILED.md#agent-signals) for full documentation.
+Teach your AI when to use them via `.cliclaw/meta/identity.md`. See [DETAILED.md](DETAILED.md#agent-signals) for full documentation.
 
 ## Supported Engines
 

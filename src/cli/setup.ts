@@ -246,7 +246,7 @@ export async function setupCommand(_args: string[]): Promise<void> {
   // 4. Token budget
   console.log("\nToken budget per cycle? (default: 8000, 0 = unlimited)");
   const budgetStr = await ask("> ");
-  const tokenBudget = parseInt(budgetStr, 10) || 8000;
+  const tokenBudget = budgetStr.trim() === "" ? 8000 : parseInt(budgetStr, 10);
 
   // 5. Hooks
   console.log("\nConfigure hooks? (scripts to run at lifecycle points)");
@@ -303,7 +303,7 @@ export async function setupCommand(_args: string[]): Promise<void> {
   console.log("Next steps:");
   console.log("  1. Edit .cliclaw/meta/you.md — tell the AI about yourself");
   console.log("  2. Edit .cliclaw/meta/projects.md — describe your project structure and build commands");
-  console.log("  3. Run `cliclaw personai` — configure agent identity interactively");
+  console.log("  3. Run `cliclaw identity` — configure agent identity interactively");
   console.log("  4. Run `cliclaw cron` — start the autonomous loop");
   if (engineEntries.length > 1) {
     console.log("  5. Run `cliclaw cron --parallel` — run all engines simultaneously");

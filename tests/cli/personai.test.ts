@@ -15,7 +15,7 @@ vi.mock("../src/utils/prompt.js", () => ({
   closePrompt: vi.fn(),
 }));
 
-import { personaiCommand } from "../src/cli/personai.js";
+import { identityCommand } from "../src/cli/personai.js";
 import { ask, confirm } from "../src/utils/prompt.js";
 import { buildPaths, ensureAllDirs } from "../src/core/config.js";
 
@@ -58,7 +58,7 @@ describe("personaiCommand", () => {
       return Promise.resolve(answers[callCount] ?? "");
     });
 
-    await personaiCommand([]);
+    await identityCommand([]);
 
     expect(existsSync(paths.identityFile)).toBe(true);
     const content = readFileSync(paths.identityFile, "utf-8");
@@ -73,7 +73,7 @@ describe("personaiCommand", () => {
 
     vi.mocked(confirm).mockResolvedValueOnce(false);
 
-    await personaiCommand([]);
+    await identityCommand([]);
 
     const output = consoleSpy.mock.calls.map((c) => c[0]).join("\n");
     expect(output).toContain("Current identity.md");
@@ -86,7 +86,7 @@ describe("personaiCommand", () => {
     vi.mocked(ask).mockResolvedValue("test answer");
     vi.mocked(confirm).mockResolvedValue(false);
 
-    await personaiCommand([]);
+    await identityCommand([]);
 
     const output = consoleSpy.mock.calls.map((c) => c[0]).join("\n");
     expect(output).toContain("Discarded");

@@ -1,4 +1,4 @@
-.PHONY: help build install install-global cron personai memory memory-search setup status audit rollback logs clean dry-run dev
+.PHONY: help build install install-global cron identity memory memory-search setup status audit rollback logs clean dry-run dev
 
 RUNNER := npx tsx src/index.ts
 
@@ -36,8 +36,8 @@ else
 	$(RUNNER) cron $(if $(ENGINE),--engine $(ENGINE)) $(filter-out $@,$(MAKECMDGOALS))
 endif
 
-personai: ## Configure AI persona interactively
-	$(RUNNER) personai
+identity: ## Configure agent identity interactively
+	$(RUNNER) identity
 
 memory: ## View/optimize memory
 	$(RUNNER) memory

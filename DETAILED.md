@@ -63,7 +63,7 @@ src/
 ├── cli/
 │   ├── cron.ts           Autonomous loop (adaptive sleep, rotation)
 │   ├── setup.ts          Setup wizard
-│   ├── personai.ts       Agent identity configuration
+│   ├── personai.ts       Agent identity configuration (writes identity.md)
 │   ├── memory.ts         Memory viewer/optimizer/search
 │   ├── status.ts         Status + cost display
 │   ├── audit.ts          Audit report from JSONL
@@ -174,7 +174,7 @@ CLIClaw builds prompts from meta files in priority order:
 | 7        | `.cliclaw/meta/boundaries.md` | Hard rules the agent must never violate |
 | 8        | `.cliclaw/meta/boot.md`     | Startup instructions — cycle 1 only     |
 
-These are created by `cliclaw setup` and `cliclaw personai` (which now writes `identity.md`). The prompt builder strips template boilerplate, empty placeholders, and HTML comments before composing the final prompt.
+These are created by `cliclaw setup` and `cliclaw identity`. The prompt builder strips template boilerplate, empty placeholders, and HTML comments before composing the final prompt.
 
 ## Prompt Builder
 
@@ -370,7 +370,7 @@ When working from source, the Makefile wraps all commands:
 | `make cron DRY_RUN=1`         | Dry-run mode                           |
 | `make cron FOCUS="task"`      | Focus on a task                        |
 | `make setup`                  | Setup wizard                           |
-| `cliclaw personai`            | Agent identity config                  |
+| `cliclaw identity`            | Agent identity config                  |
 | `make memory`                 | View memory                            |
 | `make memory-search TERM="x"` | Search memory                          |
 | `make status`                 | Show status                            |
