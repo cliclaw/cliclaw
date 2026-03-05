@@ -1,6 +1,6 @@
 /**
- * `cliclaw personai` — interactive AI persona configuration.
- * Asks questions to build the personai.md file.
+ * `cliclaw personai` — interactive AI identity/persona configuration.
+ * Asks questions to build the identity.md file.
  */
 
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
@@ -8,6 +8,21 @@ import { resolveConfig, ensureAllDirs } from "../core/config.js";
 import { ask, confirm, closePrompt } from "../utils/prompt.js";
 
 const QUESTIONS: { key: string; question: string; hint: string }[] = [
+  {
+    key: "name",
+    question: "What is the agent's name?",
+    hint: "e.g. ClawDev, CodeBot, DevAgent",
+  },
+  {
+    key: "role",
+    question: "What is the agent's role?",
+    hint: "e.g. Autonomous coding assistant, Code reviewer, DevOps engineer",
+  },
+  {
+    key: "mission",
+    question: "What is the agent's mission?",
+    hint: "e.g. Automate development workflows, Keep the codebase clean",
+  },
   {
     key: "tone",
     question: "What tone should the AI use?",
@@ -33,58 +48,42 @@ const QUESTIONS: { key: string; question: string; hint: string }[] = [
     question: "Any coding preferences or conventions?",
     hint: "e.g. prefer functional style, use early returns, kebab-case files",
   },
-  {
-    key: "context",
-    question: "Any additional context about how you work?",
-    hint: "e.g. I work in monorepos, I use pnpm, I deploy to AWS",
-  },
 ];
 
-function buildPersonaiContent(answers: Record<string, string>): string {
+function buildIdentityContent(answers: Record<string, string>): string {
   const sections: string[] = [
-    "# AI Persona (personai)",
+    "# Agent Identity",
     "",
-    "This file defines how the AI agent should behave, communicate, and prioritize.",
+    "This file defines who the AI agent is and how it should behave.",
     "",
   ];
 
-  if (answers["tone"]) {
-    sections.push(`## Tone\n${answers["tone"]}\n`);
-  }
-  if (answers["expertise"]) {
-    sections.push(`## Expertise\n${answers["expertise"]}\n`);
-  }
-  if (answers["style"]) {
-    sections.push(`## Response Style\n${answers["style"]}\n`);
-  }
-  if (answers["avoid"]) {
-    sections.push(`## Avoid\n${answers["avoid"]}\n`);
-  }
-  if (answers["preferences"]) {
-    sections.push(`## Coding Preferences\n${answers["preferences"]}\n`);
-  }
-  if (answers["context"]) {
-    sections.push(`## Additional Context\n${answers["context"]}\n`);
-  }
+  if (answers["name"]) sections.push(`## Name\n${answers["name"]}\n`);
+  if (answers["role"]) sections.push(`## Role\n${answers["role"]}\n`);
+  if (answers["mission"]) sections.push(`## Mission\n${answers["mission"]}\n`);
+  if (answers["tone"]) sections.push(`## Tone\n${answers["tone"]}\n`);
+  if (answers["expertise"]) sections.push(`## Expertise\n${answers["expertise"]}\n`);
+  if (answers["style"]) sections.push(`## Response Style\n${answers["style"]}\n`);
+  if (answers["avoid"]) sections.push(`## Avoid\n${answers["avoid"]}\n`);
+  if (answers["preferences"]) sections.push(`## Coding Preferences\n${answers["preferences"]}\n`);
 
   return sections.join("\n");
 }
 
 export async function personaiCommand(_args: string[]): Promise<void> {
   const config = resolveConfig();
-  const personaiFile = config.paths.personaiFile;
+  const identityFile = config.paths.identityFile;
   ensureAllDirs(config.paths);
 
-  console.log("\n🤖 CLIClaw Persona Configuration\n");
+  console.log("\n🤖 CLIClaw Agent Identity Configuration\n");
 
-  // Check if existing personai exists
-  if (existsSync(personaiFile)) {
-    const existing = readFileSync(personaiFile, "utf-8");
-    console.log("Current personai.md:\n");
+  if (existsSync(identityFile)) {
+    const existing = readFileSync(identityFile, "utf-8");
+    console.log("Current identity.md:\n");
     console.log(existing);
     console.log("---\n");
 
-    const update = await confirm("Update the persona?");
+    const update = await confirm("Update the identity?");
     if (!update) {
       closePrompt();
       return;
@@ -92,7 +91,6 @@ export async function personaiCommand(_args: string[]): Promise<void> {
   }
 
   const answers: Record<string, string> = {};
-
   for (const q of QUESTIONS) {
     console.log(`\n${q.question}`);
     console.log(`  (${q.hint})`);
@@ -100,21 +98,16 @@ export async function personaiCommand(_args: string[]): Promise<void> {
     if (answer) answers[q.key] = answer;
   }
 
-  // Allow free-form additions
-  console.log("\nAnything else to add? (press Enter to skip)");
-  const extra = await ask("> ");
-  if (extra) answers["extra"] = extra;
-
-  const content = buildPersonaiContent(answers);
+  const content = buildIdentityContent(answers);
 
   console.log("\n--- Preview ---");
   console.log(content);
   console.log("--- End Preview ---\n");
 
-  const save = await confirm("Save this persona?");
+  const save = await confirm("Save this identity?");
   if (save) {
-    writeFileSync(personaiFile, content);
-    console.log(`✅ Saved to ${personaiFile}`);
+    writeFileSync(identityFile, content);
+    console.log(`✅ Saved to ${identityFile}`);
   } else {
     console.log("Discarded.");
   }

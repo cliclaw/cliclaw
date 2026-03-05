@@ -59,6 +59,7 @@ npm run test:coverage # Run tests with coverage report
 ## Reporting Issues
 
 Open an issue with:
+
 - What you expected to happen
 - What actually happened
 - Steps to reproduce

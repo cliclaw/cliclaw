@@ -67,8 +67,10 @@ export async function statusCommand(_args: string[]): Promise<void> {
   const metaFiles = [
     { name: "you.md", path: paths.youFile },
     { name: "projects.md", path: paths.projectsFile },
-    { name: "personai.md", path: paths.personaiFile },
     { name: "boundaries.md", path: paths.boundariesFile },
+    { name: "identity.md", path: paths.identityFile },
+    { name: "tools.md", path: paths.toolsFile },
+    { name: "boot.md", path: paths.bootFile },
     { name: "memory.md", path: paths.memoryFile },
     { name: "config.json", path: paths.configFile },
   ];

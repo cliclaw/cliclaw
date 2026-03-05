@@ -134,6 +134,11 @@ export async function cronCommand(args: string[]): Promise<void> {
   if (config.dryRun) logInfo("DRY RUN mode — prompts will be logged but not sent to agents");
   if (focus) logInfo(`Focus: ${focus}`);
 
+  if (config.idleBeforeStart > 0) {
+    logInfo(`Idle pause: waiting ${config.idleBeforeStart}s before starting...`);
+    await sleep(config.idleBeforeStart * 1000);
+  }
+
   for (let cycle = 1; cycle <= config.maxLoop; cycle++) {
     if (shutdownRequested) break;
 
@@ -143,7 +148,8 @@ export async function cronCommand(args: string[]): Promise<void> {
     runPreCycle(config.hooks, config.projectRoot, cycle, config.hookTimeout);
 
     const enableDiff = cycle > 1 && cycle % config.freshSessionEvery !== 0;
-    const prompt = buildPrompt(config, enableDiff);
+    const active = config.engines[activeIdx] ?? primary;
+    const prompt = buildPrompt(config, enableDiff, cycle, active);
     logPromptStats(prompt);
 
     if (config.dryRun) {
@@ -160,8 +166,10 @@ export async function cronCommand(args: string[]): Promise<void> {
     let combinedOutput = "";
 
     if (config.parallel && config.engines.length > 1) {
-      // Parallel: run all engines simultaneously
-      const results = await runParallelCycles(config, prompt, cycle, config.engines);
+      // Parallel: each engine gets its own prompt (respects per-engine identity)
+      const results = await runParallelCycles(config, prompt, cycle, config.engines, (entry) =>
+        buildPrompt(config, enableDiff, cycle, entry)
+      );
       for (const r of results) {
         totalTokens += r.tokenEstimate;
         totalCost += r.costEstimate;

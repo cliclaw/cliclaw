@@ -175,11 +175,11 @@ export async function runParallelCycles(
   promptText: string,
   cycle: number,
   entries: EngineEntry[],
+  buildEnginePrompt?: (entry: EngineEntry) => string,
 ): Promise<CycleResult[]> {
   const maxConcurrent = config.maxConcurrent;
   const results: CycleResult[] = [];
 
-  // Initialize ledger so engines know what others are working on
   initLedger(config.paths.tmpDir, cycle, entries.map((e) => ({
     engine: e.alias ?? e.engine,
     focus: e.focus ?? "",
@@ -191,9 +191,10 @@ export async function runParallelCycles(
       const alias = entry.alias ?? entry.engine;
       const task = claimTask(config.paths.tmpDir, alias);
       const ledgerContext = getLedgerContext(config.paths.tmpDir);
+      const basePrompt = buildEnginePrompt ? buildEnginePrompt(entry) : promptText;
       const focusedPrompt = entry.focus
-        ? `${promptText}\n\n## Focus\nFocus on: ${entry.focus}\nDo NOT modify files outside your focus area.\n${ledgerContext}`
-        : `${promptText}\n${ledgerContext}`;
+        ? `${basePrompt}\n\n## Focus\nFocus on: ${entry.focus}\nDo NOT modify files outside your focus area.\n${ledgerContext}`
+        : `${basePrompt}\n${ledgerContext}`;
 
       return spawnAgent(config, focusedPrompt, cycle, entry.engine, entry.model).then((result) => {
         if (task) {

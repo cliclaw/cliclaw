@@ -37,46 +37,46 @@ afterEach(() => {
 });
 
 describe("personaiCommand", () => {
-  it("creates personai.md with answers", async () => {
+  it("creates identity.md with answers", async () => {
     const paths = buildPaths(testDir);
     ensureAllDirs(paths);
 
-    // Simulate answers: tone, expertise, style, avoid, preferences, context, extra
+    // Simulate answers: name, role, mission, tone, expertise, style, avoid, preferences
     let callCount = 0;
     vi.mocked(ask).mockImplementation(() => {
       callCount++;
       const answers: Record<number, string> = {
-        1: "Professional",
-        2: "TypeScript",
-        3: "Code-heavy",
-        4: "No any types",
-        5: "Functional style",
-        6: "AWS deployment",
-        7: "", // extra — skip
+        1: "ClawDev",
+        2: "Autonomous coding assistant",
+        3: "Automate workflows",
+        4: "Professional",
+        5: "TypeScript",
+        6: "Code-heavy",
+        7: "No any types",
+        8: "Functional style",
       };
       return Promise.resolve(answers[callCount] ?? "");
     });
 
     await personaiCommand([]);
 
-    expect(existsSync(paths.personaiFile)).toBe(true);
-    const content = readFileSync(paths.personaiFile, "utf-8");
-    expect(content).toContain("Professional");
+    expect(existsSync(paths.identityFile)).toBe(true);
+    const content = readFileSync(paths.identityFile, "utf-8");
+    expect(content).toContain("ClawDev");
     expect(content).toContain("TypeScript");
   });
 
-  it("shows existing personai and asks to update", async () => {
+  it("shows existing identity and asks to update", async () => {
     const paths = buildPaths(testDir);
     ensureAllDirs(paths);
-    writeFileSync(paths.personaiFile, "# Existing Persona\nOld content");
+    writeFileSync(paths.identityFile, "# Agent Identity\nOld content");
 
-    // First confirm = update? → false
     vi.mocked(confirm).mockResolvedValueOnce(false);
 
     await personaiCommand([]);
 
     const output = consoleSpy.mock.calls.map((c) => c[0]).join("\n");
-    expect(output).toContain("Current personai.md");
+    expect(output).toContain("Current identity.md");
   });
 
   it("discards when save is declined", async () => {
@@ -84,7 +84,6 @@ describe("personaiCommand", () => {
     ensureAllDirs(paths);
 
     vi.mocked(ask).mockResolvedValue("test answer");
-    // confirm calls: save? → false
     vi.mocked(confirm).mockResolvedValue(false);
 
     await personaiCommand([]);

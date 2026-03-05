@@ -56,7 +56,6 @@ describe("buildPaths", () => {
     expect(paths.logFile).toContain(".cliclaw/logs/autonomous.log");
     expect(paths.logJsonl).toContain(".cliclaw/logs/autonomous.jsonl");
     expect(paths.stateFile).toContain("cliclaw-state.json");
-    expect(paths.heartbeatFile).toContain("HEARTBEAT.md");
     expect(paths.memoryFile).toContain("MEMORY.md");
     expect(paths.boundariesFile).toContain("BOUNDARIES.md");
     expect(paths.lockDir).toContain("cliclaw.lockdir");
@@ -67,7 +66,9 @@ describe("buildPaths", () => {
     expect(paths.metaDir).toContain("meta");
     expect(paths.youFile).toContain("you.md");
     expect(paths.projectsFile).toContain("projects.md");
-    expect(paths.personaiFile).toContain("personai.md");
+    expect(paths.identityFile).toContain("identity.md");
+    expect(paths.toolsFile).toContain("tools.md");
+    expect(paths.bootFile).toContain("boot.md");
     expect(paths.configFile).toContain("config.json");
     expect(paths.snapshotsDir).toContain("snapshots");
   });

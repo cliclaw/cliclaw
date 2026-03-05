@@ -1,17 +1,18 @@
 /**
  * Prompt builder — composes the agent prompt from meta files + memory + state.
- * Priority order: memory → you → projects → personai
+ * Priority order: memory → you → projects → identity → tools → boundaries → boot
  * Features: token budget, prompt diff, secret scanning, content cleaning.
  */
 
 import { readFileSync, existsSync } from "node:fs";
+import { resolve } from "node:path";
 import { createHash } from "node:crypto";
 import { readMemorySnippet } from "../core/memory.js";
 import { readState } from "../core/state.js";
 import { scanAndRedact } from "../core/secrets.js";
 import { estimateTokens } from "../core/cost.js";
 import { logInfo, logWarn } from "../core/logger.js";
-import type { ClawConfig } from "../core/types.js";
+import type { ClawConfig, EngineEntry } from "../core/types.js";
 
 function readFileOr(path: string, fallback: string): string {
   if (!existsSync(path)) return fallback;
@@ -71,14 +72,20 @@ function diffAwareSection(
   return truncate(content, maxTokens);
 }
 
-export function buildPrompt(config: ClawConfig, enableDiff = false): string {
+export function buildPrompt(config: ClawConfig, enableDiff = false, cycle = 0, activeEngine?: EngineEntry): string {
   const { paths } = config;
+
+  const identityPath = activeEngine?.identity
+    ? resolve(config.projectRoot, activeEngine.identity)
+    : paths.identityFile;
 
   const memory = readMemorySnippet(paths.memoryFile);
   const youRaw = cleanMetaContent(readFileOr(paths.youFile, ""));
   const projectsRaw = cleanMetaContent(readFileOr(paths.projectsFile, ""));
-  const personaiRaw = cleanMetaContent(readFileOr(paths.personaiFile, ""));
   const boundariesRaw = cleanMetaContent(readFileOr(paths.boundariesFile, ""));
+  const identityRaw = cleanMetaContent(readFileOr(identityPath, ""));
+  const toolsRaw = cleanMetaContent(readFileOr(paths.toolsFile, ""));
+  const bootRaw = cleanMetaContent(readFileOr(paths.bootFile, ""));
 
   const lastSuccess = readState("lastSuccess") ?? "never";
   const lastHash = enableDiff ? (readState("lastPromptHash") as string | undefined) : undefined;
@@ -105,14 +112,24 @@ export function buildPrompt(config: ClawConfig, enableDiff = false): string {
     parts.push("\n## Projects\n" + diffAwareSection(projectsRaw, "Projects", budgets.projects, lastHash));
   }
 
-  // Persona
-  if (personaiRaw && !isOnlyTemplate(personaiRaw)) {
-    parts.push("\n## AI Persona\n" + diffAwareSection(personaiRaw, "Persona", budgets.personai, lastHash));
+  // Identity (agent persona + tone)
+  if (identityRaw && !isOnlyTemplate(identityRaw)) {
+    parts.push("\n## Agent Identity\n" + truncate(identityRaw, budgets.identity));
   }
 
   // Boundaries
   if (boundariesRaw && !isOnlyTemplate(boundariesRaw)) {
     parts.push("\n## Boundaries\n" + truncate(boundariesRaw, budgets.boundaries));
+  }
+
+  // Tools
+  if (toolsRaw && !isOnlyTemplate(toolsRaw)) {
+    parts.push("\n## Available Tools\n" + truncate(toolsRaw, budgets.tools));
+  }
+
+  // Boot instructions — only injected on cycle 1
+  if (cycle === 1 && bootRaw && !isOnlyTemplate(bootRaw)) {
+    parts.push("\n## Boot Instructions (first cycle only)\n" + truncate(bootRaw, budgets.boot));
   }
 
   // Focus

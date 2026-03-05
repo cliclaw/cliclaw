@@ -80,7 +80,6 @@ describe("setupCommand", () => {
     const paths = buildPaths(testDir);
     expect(existsSync(paths.youFile)).toBe(true);
     expect(existsSync(paths.projectsFile)).toBe(true);
-    expect(existsSync(paths.personaiFile)).toBe(true);
     expect(existsSync(paths.boundariesFile)).toBe(true);
   });
 

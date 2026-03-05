@@ -40,6 +40,8 @@ export interface EngineEntry {
   model: string;
   alias?: string;
   focus?: string;
+  /** Path to an identity file for this engine (relative to projectRoot). Falls back to meta/identity.md */
+  identity?: string;
 }
 
 export interface ClawConfig {
@@ -62,6 +64,8 @@ export interface ClawConfig {
   /** Plugin hooks */
   hooks: HooksConfig;
   paths: ClawPaths;
+  /** Seconds to idle/pause before the loop starts (0 = no pause) */
+  idleBeforeStart: number;
   /** How often (in cycles) to save a state snapshot */
   snapshotEvery: number;
   /** Consecutive failures before rotating to next engine */
@@ -77,7 +81,7 @@ export interface ClawConfig {
   /** Max state snapshots to keep */
   maxSnapshots: number;
   /** Per-section prompt token budgets */
-  promptBudgets: { memory: number; you: number; projects: number; personai: number; boundaries: number };
+  promptBudgets: { memory: number; you: number; projects: number; boundaries: number; identity: number; tools: number; boot: number };
   /** Memory trim: max lines before trimming */
   memoryMaxLines: number;
   /** Memory trim: lines to keep from the top */
@@ -107,7 +111,9 @@ export interface ClawPaths {
   metaDir: string;
   youFile: string;
   projectsFile: string;
-  personaiFile: string;
+  identityFile: string;
+  toolsFile: string;
+  bootFile: string;
   configFile: string;
   snapshotsDir: string;
 }
@@ -127,7 +133,6 @@ export interface MetaFiles {
   memory: string;
   you: string;
   projects: string;
-  personai: string;
   boundaries: string;
 }
 
@@ -162,6 +167,7 @@ export interface ProjectConfig {
   tokenBudget?: number;
   maxConcurrent?: number;
   hooks?: HooksConfig;
+  idleBeforeStart?: number;
   snapshotEvery?: number;
   engineRotateAfter?: number;
   stallMax?: number;
@@ -169,7 +175,7 @@ export interface ProjectConfig {
   stallBackoffCap?: number;
   hookTimeout?: number;
   maxSnapshots?: number;
-  promptBudgets?: { memory?: number; you?: number; projects?: number; personai?: number; boundaries?: number };
+  promptBudgets?: { memory?: number; you?: number; projects?: number; boundaries?: number; identity?: number; tools?: number; boot?: number };
   memoryMaxLines?: number;
   memoryKeepHead?: number;
   memoryKeepTail?: number;

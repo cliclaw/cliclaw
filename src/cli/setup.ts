@@ -88,34 +88,6 @@ Folder Structure:
 `);
 }
 
-function initPersonaiFile(path: string): void {
-  if (existsSync(path)) return;
-  mkdirSync(dirname(path), { recursive: true });
-  writeFileSync(path, `# AI Persona (personai)
-
-This file defines how the AI agent should behave, communicate, and prioritize.
-
-## Tone
-Professional and concise.
-
-## Expertise
-General software development.
-
-## Response Style
-Code-heavy, minimal explanations.
-
-## Avoid
-- Don't add unnecessary comments
-- Don't refactor unrelated code
-- Don't use \`any\` type in TypeScript
-
-## Coding Preferences
-- Prefer functional style
-- Use early returns
-- Keep files under 500 lines
-`);
-}
-
 function initBoundariesFile(path: string): void {
   if (existsSync(path)) return;
   mkdirSync(dirname(path), { recursive: true });
@@ -134,6 +106,53 @@ function initBoundariesFile(path: string): void {
 - Follow existing code conventions
 `);
 }
+
+function initIdentityFile(path: string): void {
+  if (existsSync(path)) return;
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, `# Agent Identity
+
+<!-- Fill in your agent's identity details -->
+
+- **Name**: 
+- **Role**: Autonomous coding assistant
+- **Mission**: 
+- **Emoji**: 🤖
+`);
+}
+
+function initToolsFile(path: string): void {
+  if (existsSync(path)) return;
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, `# Available Tools
+
+<!-- Document the tools and commands available in this environment -->
+
+## Version Control
+- \`git\` — standard git CLI
+
+## Build & Test
+- Document your build commands here (e.g. \`npm run build\`, \`make test\`)
+
+## Environment Notes
+- Document any local environment specifics here
+`);
+}
+
+function initBootFile(path: string): void {
+  if (existsSync(path)) return;
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, `# Boot Instructions
+
+<!-- Optional startup instructions executed at the first cycle only -->
+<!-- Leave empty if no special startup steps are needed -->
+
+## On First Run
+- Check for any pending tasks or TODOs
+- Review recent git history for context
+`);
+}
+
 
 export async function setupCommand(_args: string[]): Promise<void> {
   const config = resolveConfig();
@@ -251,10 +270,14 @@ export async function setupCommand(_args: string[]): Promise<void> {
   console.log(`  ✓ ${paths.youFile}`);
   initProjectsFile(paths.projectsFile);
   console.log(`  ✓ ${paths.projectsFile}`);
-  initPersonaiFile(paths.personaiFile);
-  console.log(`  ✓ ${paths.personaiFile}`);
   initBoundariesFile(paths.boundariesFile);
   console.log(`  ✓ ${paths.boundariesFile}`);
+  initIdentityFile(paths.identityFile);
+  console.log(`  ✓ ${paths.identityFile}`);
+  initToolsFile(paths.toolsFile);
+  console.log(`  ✓ ${paths.toolsFile}`);
+  initBootFile(paths.bootFile);
+  console.log(`  ✓ ${paths.bootFile}`);
   initMemory(paths.memoryFile);
   console.log(`  ✓ ${paths.memoryFile}`);
 
@@ -280,7 +303,7 @@ export async function setupCommand(_args: string[]): Promise<void> {
   console.log("Next steps:");
   console.log("  1. Edit .cliclaw/meta/you.md — tell the AI about yourself");
   console.log("  2. Edit .cliclaw/meta/projects.md — describe your project structure and build commands");
-  console.log("  3. Run `cliclaw personai` — configure AI persona interactively");
+  console.log("  3. Run `cliclaw personai` — configure agent identity interactively");
   console.log("  4. Run `cliclaw cron` — start the autonomous loop");
   if (engineEntries.length > 1) {
     console.log("  5. Run `cliclaw cron --parallel` — run all engines simultaneously");

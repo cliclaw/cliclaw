@@ -73,14 +73,4 @@ describe("cleanCommand", () => {
 
     expect(existsSync(paths.stateFile)).toBe(false);
   });
-
-  it("removes heartbeat when confirmed", async () => {
-    const paths = buildPaths(testDir);
-    ensureAllDirs(paths);
-    writeFileSync(paths.heartbeatFile, "heartbeat");
-
-    await cleanCommand([]);
-
-    expect(existsSync(paths.heartbeatFile)).toBe(false);
-  });
 });

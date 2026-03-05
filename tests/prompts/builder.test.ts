@@ -50,6 +50,18 @@ function makeConfig(overrides: Partial<ClawConfig> = {}): ClawConfig {
     tokenBudget: 0,
     hooks: { preCycle: [], postCycle: [], onSuccess: [], onFailure: [] },
     paths,
+    idleBeforeStart: 0,
+    snapshotEvery: 4,
+    engineRotateAfter: 3,
+    stallMax: 10,
+    stallBackoffMultiplier: 1.5,
+    stallBackoffCap: 10,
+    hookTimeout: 60000,
+    maxSnapshots: 20,
+    promptBudgets: { memory: 500, you: 400, projects: 600, boundaries: 200, identity: 200, tools: 300, boot: 300 },
+    memoryMaxLines: 1100,
+    memoryKeepHead: 80,
+    memoryKeepTail: 850,
     ...overrides,
   };
 }
@@ -115,11 +127,12 @@ describe("buildPrompt", () => {
     expect(prompt).toContain("## Projects");
   });
 
-  it("includes personai when present", () => {
+  it("includes identity when present", () => {
     const config = makeConfig();
-    writeFileSync(config.paths.personaiFile, "## Tone\nProfessional and concise.\n\n## Expertise\nTypeScript");
+    writeFileSync(config.paths.identityFile, "## Tone\nProfessional and concise.\n\n## Expertise\nTypeScript\n\n## Role\nCoding assistant");
     const prompt = buildPrompt(config);
-    expect(prompt).toContain("AI Persona");
+    expect(prompt).toContain("Agent Identity");
+    expect(prompt).toContain("Coding assistant");
   });
 
   it("includes boundaries when present", () => {
@@ -127,6 +140,42 @@ describe("buildPrompt", () => {
     writeFileSync(config.paths.boundariesFile, "## Do NOT\n- Delete production databases\n- Push to main");
     const prompt = buildPrompt(config);
     expect(prompt).toContain("Boundaries");
+  });
+
+  it("includes identity when present", () => {
+    const config = makeConfig();
+    writeFileSync(config.paths.identityFile, "## Role\nAutonomous coding assistant\n\n## Mission\nAutomate workflows");
+    const prompt = buildPrompt(config);
+    expect(prompt).toContain("Agent Identity");
+    expect(prompt).toContain("Autonomous coding assistant");
+  });
+
+  it("includes tools when present", () => {
+    const config = makeConfig();
+    writeFileSync(config.paths.toolsFile, "## Version Control\n- `git` — standard git CLI");
+    const prompt = buildPrompt(config);
+    expect(prompt).toContain("Available Tools");
+  });
+
+  it("includes boot instructions only on cycle 1", () => {
+    const config = makeConfig();
+    writeFileSync(config.paths.bootFile, "## On First Run\n- Check for pending tasks");
+    const promptCycle1 = buildPrompt(config, false, 1);
+    expect(promptCycle1).toContain("Boot Instructions");
+    const promptCycle2 = buildPrompt(config, false, 2);
+    expect(promptCycle2).not.toContain("Boot Instructions");
+  });
+
+  it("uses per-engine identity file when specified", () => {
+    const { join } = require("node:path");
+    const { writeFileSync: wf } = require("node:fs");
+    const customIdentityPath = join(testDir, "custom-identity.md");
+    wf(customIdentityPath, "## Role\nCode Reviewer\n\n## Mission\nReview all PRs");
+    const config = makeConfig({
+      engines: [{ engine: "kiro", model: "m", alias: "reviewer", identity: "custom-identity.md" }],
+    });
+    const prompt = buildPrompt(config, false, 1, config.engines[0]);
+    expect(prompt).toContain("Code Reviewer");
   });
 
   it("truncates prompt when token budget exceeded", () => {

@@ -25,21 +25,21 @@ The idea is dead simple: you already have AI CLI tools installed and authenticat
 
 OpenClaw is a full autonomous agent platform — and a great one. Here's how CLIClaw takes a different approach to similar problems:
 
-| Capability | OpenClaw | CLIClaw |
-|-----------|----------|---------|
-| **LLM access** | Direct API keys to 12+ providers with model routing | Piggybacks on your existing CLI tools — zero API setup, zero extra billing |
-| **Messaging** | Telegram, Discord, WhatsApp, Slack | Terminal-native — one project, one loop, full focus. No chat noise, no context switching |
-| **Tool execution** | Sandboxed runtime for browser, files, web | Delegates to the AI engine itself — Cursor, Claude, Kiro already have tool use built in |
-| **Multi-channel** | Manages conversations across platforms | One persona per project. Each repo gets its own memory, config, and AI personality — isolated by design |
-| **Memory** | Vector-based with embedding APIs | File-based TF-IDF vectors — semantic search with zero API calls, zero cost, works offline |
-| **Dashboard** | Web UI for monitoring | `cliclaw status`, `cliclaw audit` — everything in the terminal, scriptable, pipe-friendly |
-| **Deployment** | Docker, VPS, always-on server | `curl \| bash` and done. Runs from your laptop. No infrastructure to maintain |
+| Capability         | OpenClaw                                            | CLIClaw                                                                                                 |
+|--------------------|-----------------------------------------------------|---------------------------------------------------------------------------------------------------------|
+| **LLM access**     | Direct API keys to 12+ providers with model routing | Piggybacks on your existing CLI tools — zero API setup, zero extra billing                              |
+| **Messaging**      | Telegram, Discord, WhatsApp, Slack                  | Terminal-native — one project, one loop, full focus. No chat noise, no context switching                |
+| **Tool execution** | Sandboxed runtime for browser, files, web           | Delegates to the AI engine itself — Cursor, Claude, Kiro already have tool use built in                 |
+| **Multi-channel**  | Manages conversations across platforms              | One persona per project. Each repo gets its own memory, config, and AI personality — isolated by design |
+| **Memory**         | Vector-based with embedding APIs                    | File-based TF-IDF vectors — semantic search with zero API calls, zero cost, works offline               |
+| **Dashboard**      | Web UI for monitoring                               | `cliclaw status`, `cliclaw audit` — everything in the terminal, scriptable, pipe-friendly               |
+| **Deployment**     | Docker, VPS, always-on server                       | `curl \| bash` and done. Runs from your laptop. No infrastructure to maintain                           |
 
 **In short**: OpenClaw is a full autonomous agent platform. CLIClaw is a cron job that makes your existing AI coding tools work harder while you sleep.
 
 ## Architecture
 
-```
+```txt
 src/
 ├── index.ts              Entry point + command router
 ├── core/
@@ -51,11 +51,10 @@ src/
 │   ├── memory.ts         Memory read/write/trim
 │   ├── vectors.ts        TF-IDF vector memory (semantic search)
 │   ├── ledger.ts         Parallel task ledger (engine coordination)
-│   ├── heartbeat.ts      Periodic status updates
 │   ├── cost.ts           Per-model pricing + cost estimation
 │   ├── secrets.ts        Secret scanning + redaction
 │   ├── snapshots.ts      State snapshot + rollback
-│   └── hooks.ts          Plugin lifecycle hooks
+│   └── hooks.ts          Plugin lifecycle hooks + agent signals
 ├── engines/
 │   ├── registry.ts       Engine definitions (7 engines)
 │   └── runner.ts         Process spawning + parallel execution
@@ -64,7 +63,7 @@ src/
 ├── cli/
 │   ├── cron.ts           Autonomous loop (adaptive sleep, rotation)
 │   ├── setup.ts          Setup wizard
-│   ├── personai.ts       Persona configuration
+│   ├── personai.ts       Agent identity configuration
 │   ├── memory.ts         Memory viewer/optimizer/search
 │   ├── status.ts         Status + cost display
 │   ├── audit.ts          Audit report from JSONL
@@ -89,19 +88,19 @@ src/
 
 ### Environment Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `CLICLAW_ENGINE` | `kiro` | Default engine (used when no config file) |
-| `CLICLAW_MODEL` | (per engine) | Model override |
-| `CLICLAW_PROJECT_ROOT` | `cwd` | Project root directory |
-| `CLICLAW_MAX_LOOP` | `500` | Max loop cycles |
-| `CLICLAW_SLEEP` | `60` | Sleep between cycles (seconds) |
-| `CLICLAW_SLEEP_FAIL` | `90` | Sleep after failure (seconds) |
-| `CLICLAW_TIMEOUT` | `86400` | Agent timeout per cycle (seconds) |
-| `CLICLAW_FRESH_EVERY` | `3` | Start fresh session every N cycles |
-| `CLICLAW_TOKEN_BUDGET` | `8000` | Max tokens per prompt (0 = unlimited) |
-| `CLICLAW_MAX_CONCURRENT` | `2` | Max parallel engines |
-| `CLICLAW_DRY_RUN` | `false` | Preview prompts without running agents |
+| Variable                 | Default      | Description                               |
+|--------------------------|--------------|-------------------------------------------|
+| `CLICLAW_ENGINE`         | `kiro`       | Default engine (used when no config file) |
+| `CLICLAW_MODEL`          | (per engine) | Model override                            |
+| `CLICLAW_PROJECT_ROOT`   | `cwd`        | Project root directory                    |
+| `CLICLAW_MAX_LOOP`       | `500`        | Max loop cycles                           |
+| `CLICLAW_SLEEP`          | `60`         | Sleep between cycles (seconds)            |
+| `CLICLAW_SLEEP_FAIL`     | `90`         | Sleep after failure (seconds)             |
+| `CLICLAW_TIMEOUT`        | `86400`      | Agent timeout per cycle (seconds)         |
+| `CLICLAW_FRESH_EVERY`    | `3`          | Start fresh session every N cycles        |
+| `CLICLAW_TOKEN_BUDGET`   | `8000`       | Max tokens per prompt (0 = unlimited)     |
+| `CLICLAW_MAX_CONCURRENT` | `2`          | Max parallel engines                      |
+| `CLICLAW_DRY_RUN`        | `false`      | Preview prompts without running agents    |
 
 ### Project Config (`.cliclaw/config.json`)
 
@@ -126,55 +125,64 @@ The `engines` array is the primary config unit. The first entry is the primary e
 ```
 
 Each engine entry supports:
+
 - `engine` — Engine name (`kiro`, `claude`, `cursor`, `codex`, `aider`, `gemini`, `copilot`)
 - `model` — Model to use (defaults to engine's default if omitted in env/CLI)
 - `alias` — Unique name for this instance (required when using duplicate engines, auto-generated by setup wizard)
 - `focus` — Focus area for parallel execution (e.g. `"frontend"`, `"backend"`)
+- `identity` — Path to an identity file for this engine, relative to `projectRoot` (e.g. `".cliclaw/meta/identity-reviewer.md"`). Falls back to `meta/identity.md` if omitted.
 
 All other top-level fields are optional and fall back to defaults:
 
-| Field | Default | Description |
-|-------|---------|-------------|
-| `maxLoop` | `500` | Max cycles before stopping |
-| `sleepNormal` | `60` | Seconds to sleep after a successful cycle |
-| `tokenBudget` | `8000` | Max tokens per prompt (0 = unlimited) |
-| `maxConcurrent` | `2` | Max parallel engines when using `--parallel` |
-| `snapshotEvery` | `4` | Save a state snapshot every N cycles |
-| `engineRotateAfter` | `3` | Consecutive failures before rotating to next engine |
-| `stallMax` | `10` | Stall cycles before emitting a stall warning |
-| `stallBackoffMultiplier` | `1.5` | Sleep multiplier per stall cycle (`sleep *= multiplier^stallCycles`) |
-| `stallBackoffCap` | `10` | Maximum backoff multiplier (caps exponential growth) |
-| `hookTimeout` | `60000` | Hook execution timeout in milliseconds |
-| `maxSnapshots` | `20` | Max state snapshots to keep on disk |
-| `memoryMaxLines` | `1100` | Max MEMORY.md lines before trimming |
-| `memoryKeepHead` | `80` | Lines to preserve from the top when trimming |
-| `memoryKeepTail` | `850` | Lines to preserve from the bottom when trimming |
-| `promptBudgets.memory` | `500` | Token budget for memory section in prompt |
-| `promptBudgets.you` | `400` | Token budget for you.md section |
-| `promptBudgets.projects` | `600` | Token budget for projects.md section |
-| `promptBudgets.personai` | `300` | Token budget for personai.md section |
-| `promptBudgets.boundaries` | `200` | Token budget for boundaries.md section |
+| Field                      | Default | Description                                                          |
+|----------------------------|---------|----------------------------------------------------------------------|
+| `maxLoop`                  | `500`   | Max cycles before stopping                                           |
+| `sleepNormal`              | `60`    | Seconds to sleep after a successful cycle                            |
+| `idleBeforeStart`          | `0`     | Seconds to pause before the loop starts (0 = no pause)              |
+| `tokenBudget`              | `8000`  | Max tokens per prompt (0 = unlimited)                                |
+| `maxConcurrent`            | `2`     | Max parallel engines when using `--parallel`                         |
+| `snapshotEvery`            | `4`     | Save a state snapshot every N cycles                                 |
+| `engineRotateAfter`        | `3`     | Consecutive failures before rotating to next engine                  |
+| `stallMax`                 | `10`    | Stall cycles before emitting a stall warning                         |
+| `stallBackoffMultiplier`   | `1.5`   | Sleep multiplier per stall cycle (`sleep *= multiplier^stallCycles`) |
+| `stallBackoffCap`          | `10`    | Maximum backoff multiplier (caps exponential growth)                 |
+| `hookTimeout`              | `60000` | Hook execution timeout in milliseconds                               |
+| `maxSnapshots`             | `20`    | Max state snapshots to keep on disk                                  |
+| `memoryMaxLines`           | `1100`  | Max MEMORY.md lines before trimming                                  |
+| `memoryKeepHead`           | `80`    | Lines to preserve from the top when trimming                         |
+| `memoryKeepTail`           | `850`   | Lines to preserve from the bottom when trimming                      |
+| `promptBudgets.memory`     | `500`   | Token budget for memory section in prompt                            |
+| `promptBudgets.you`        | `400`   | Token budget for you.md section                                      |
+| `promptBudgets.projects`   | `600`   | Token budget for projects.md section                                 |
+| `promptBudgets.boundaries` | `200`   | Token budget for boundaries.md section                               |
+| `promptBudgets.identity`   | `200`   | Token budget for identity.md section                                 |
+| `promptBudgets.tools`      | `300`   | Token budget for tools.md section                                    |
+| `promptBudgets.boot`       | `300`   | Token budget for boot.md section (cycle 1 only)                      |
 
 ## Meta Files
 
 CLIClaw builds prompts from meta files in priority order:
 
-| Priority | File | Purpose |
-|----------|------|---------|
-| 1 | `.cliclaw/memory/MEMORY.md` | Persistent learned patterns and insights |
-| 2 | `.cliclaw/meta/you.md` | Who you are, your role and tech stack |
-| 3 | `.cliclaw/meta/projects.md` | Active projects and priorities |
-| 4 | `.cliclaw/meta/personai.md` | AI persona (tone, expertise, style) |
+| Priority | File                        | Purpose                                  |
+|----------|-----------------------------|------------------------------------------|
+| 1        | `.cliclaw/memory/MEMORY.md` | Persistent learned patterns and insights |
+| 2        | `.cliclaw/meta/you.md`      | Who you are, your role and tech stack    |
+| 3        | `.cliclaw/meta/projects.md` | Active projects and priorities           |
 
-These are created by `cliclaw setup` and `cliclaw personai`. The prompt builder strips template boilerplate, empty placeholders, and HTML comments before composing the final prompt.
+| 5        | `.cliclaw/meta/identity.md` | Agent identity: name, role, mission      |
+| 6        | `.cliclaw/meta/tools.md`    | Available tools and CLI commands         |
+| 7        | `.cliclaw/meta/boundaries.md` | Hard rules the agent must never violate |
+| 8        | `.cliclaw/meta/boot.md`     | Startup instructions — cycle 1 only     |
+
+These are created by `cliclaw setup` and `cliclaw personai` (which now writes `identity.md`). The prompt builder strips template boilerplate, empty placeholders, and HTML comments before composing the final prompt.
 
 ## Prompt Builder
 
 The prompt builder (`src/prompts/builder.ts`) composes a single prompt each cycle:
 
 - Reads all meta files in priority order
-- Cleans content: strips `# ` title headers, `<!-- -->` comments, empty `- **Key**: ` fields, boilerplate descriptions
-- Demotes `## ` to `### ` in meta content to avoid header clashes
+- Cleans content: strips `#` title headers, `<!-- -->` comments, empty `- **Key**:` fields, boilerplate descriptions
+- Demotes `##` to `###` in meta content to avoid header clashes
 - Skips sections that contain only template content (no user data)
 - Filters template rules from memory snippets
 - Applies token budget — truncates if the composed prompt exceeds the limit
@@ -214,30 +222,30 @@ When `--parallel` is passed (or `config.parallel` is true), CLIClaw runs all con
 
 The cron loop (`src/cli/cron.ts`) runs this cycle:
 
-1. **Lock** — Acquire singleton lock (prevents duplicate instances)
-2. **Snapshot** — Save state before the cycle
-3. **Hooks** — Run `preCycle` scripts
-4. **Build prompt** — Compose from meta files + task focus
-5. **Diff check** — Skip if prompt hash matches last cycle
-6. **Execute** — Spawn the AI agent (or log in dry-run mode)
-7. **Signals** — Parse agent signals (`[EXIT CLICLAW]`, `[SKIP CYCLE]`, `[STALL RESET]`) from output
-8. **Track** — Record cost, tokens, duration
-9. **Memory** — Extract and save any `MEMORY_APPEND` blocks from agent output
-10. **Hooks** — Run `onSuccess`/`onFailure` + `postCycle` scripts
-11. **Heartbeat** — Update `HEARTBEAT.md` with status
+1. **Idle** — Optional pause before starting (`idleBeforeStart` seconds)
+2. **Lock** — Acquire singleton lock (prevents duplicate instances)
+3. **Snapshot** — Save state before the cycle (every `snapshotEvery` cycles)
+4. **Hooks** — Run `preCycle` scripts
+5. **Build prompt** — Compose from meta files + task focus (boot.md injected on cycle 1 only)
+6. **Diff check** — Skip if prompt hash matches last cycle
+7. **Execute** — Spawn the AI agent (or log in dry-run mode)
+8. **Signals** — Parse agent signals (`[EXIT CLICLAW]`, `[SKIP CYCLE]`, `[STALL RESET]`) from output
+9. **Track** — Record cost, tokens, duration
+10. **Memory** — Extract and save any `MEMORY_APPEND` blocks from agent output
+11. **Hooks** — Run `onSuccess`/`onFailure` + `postCycle` scripts
 12. **Sleep** — Adaptive sleep (exponential backoff on stalls, reset on progress)
-13. **Rotate** — Switch to next configured engine after 3 consecutive failures
+13. **Rotate** — Switch to next configured engine after `engineRotateAfter` consecutive failures
 
 ### Adaptive Sleep
 
 - Normal: `sleepNormal` seconds (default 60)
 - After failure: `sleepAfterFailure` seconds (default 90)
-- Stall detection: exponential backoff `baseSleep * 1.5^stallCycles`, capped at 10x
+- Stall detection: exponential backoff `baseSleep * stallBackoffMultiplier^stallCycles`, capped at `stallBackoffCap`x
 - Progress resets the backoff counter
 
 ### Engine Rotation
 
-After 3 consecutive failures with the current engine, CLIClaw rotates to the next engine in the configured `engines` array (not the full registry — only engines you've configured). This prevents getting stuck when one engine is down or rate-limited.
+After `engineRotateAfter` consecutive failures (default 3) with the current engine, CLIClaw rotates to the next engine in the configured `engines` array. This prevents getting stuck when one engine is down or rate-limited.
 
 ## Vector Memory
 
@@ -288,12 +296,12 @@ Detected secrets are redacted before the prompt is sent to any engine.
 
 Configure in `.cliclaw/config.json` under `hooks`:
 
-| Hook | When | Env vars |
-|------|------|----------|
-| `preCycle` | Before each cycle starts | `CLICLAW_CYCLE` |
+| Hook        | When                                            | Env vars        |
+|-------------|-------------------------------------------------|-----------------|
+| `preCycle`  | Before each cycle starts                        | `CLICLAW_CYCLE` |
 | `postCycle` | After each cycle completes (success or failure) | `CLICLAW_CYCLE` |
-| `onSuccess` | After a successful cycle | `CLICLAW_CYCLE` |
-| `onFailure` | After a failed cycle | `CLICLAW_CYCLE` |
+| `onSuccess` | After a successful cycle                        | `CLICLAW_CYCLE` |
+| `onFailure` | After a failed cycle                            | `CLICLAW_CYCLE` |
 
 Each hook is a shell command string executed via `child_process.execSync` with a 60-second timeout. The `CLICLAW_CYCLE` environment variable is set to the current cycle number.
 
@@ -312,13 +320,13 @@ Each hook is a shell command string executed via `child_process.execSync` with a
 
 Agent signals are special directives the AI can embed anywhere in its response to control the CLIClaw loop. They give the AI agency over the loop itself — it can declare work done, skip unnecessary cycles, or clear a stall.
 
-| Signal | Effect |
-|--------|--------|
-| `[EXIT CLICLAW]` | Gracefully terminate the loop after the current cycle completes (runs `onSuccess` hooks first) |
-| `[SKIP CYCLE]` | Skip hooks and sleep for this cycle — useful when the agent detects nothing to do |
-| `[STALL RESET]` | Reset the stall counter — use when the agent has made real progress that the loop didn't detect |
+| Signal           | Effect                                                                                          |
+|------------------|-------------------------------------------------------------------------------------------------|
+| `[EXIT CLICLAW]` | Gracefully terminate the loop after the current cycle completes (runs `onSuccess` hooks first)  |
+| `[SKIP CYCLE]`   | Skip hooks and sleep for this cycle — useful when the agent detects nothing to do               |
+| `[STALL RESET]`  | Reset the stall counter — use when the agent has made real progress that the loop didn't detect |
 
-**How to use them:** Instruct the AI in your `.cliclaw/meta/personai.md` or project prompt when to emit these signals. For example:
+**How to use them:** Instruct the AI in your `.cliclaw/meta/identity.md` or project prompt when to emit these signals. For example:
 
 ```markdown
 When you have completed all outstanding tasks and there is nothing left to do,
@@ -334,8 +342,7 @@ Signals are detected in the parsed text output (after JSON decoding for engines 
 
 - **File log** — Human-readable log at `.cliclaw/logs/autonomous.log`
 - **JSONL log** — Machine-readable at `.cliclaw/logs/autonomous.jsonl`
-- **Heartbeat** — `.cliclaw/state/HEARTBEAT.md`, updated every 4 cycles
-- **Live tail** — `cliclaw logs --tail` watches the log file in real-time
+- **Live tail** — `cliclaw logs --tail` streams decoded agent output in real-time (decodes stream-json for cursor/claude/gemini, plain text for others)
 
 ## Singleton Lock
 
@@ -356,22 +363,22 @@ npm run test:coverage   # Run with coverage report
 
 When working from source, the Makefile wraps all commands:
 
-| Target | Description |
-|--------|-------------|
-| `make cron` | Start the loop |
-| `make cron ENGINE=cursor` | Use a specific engine |
-| `make cron DRY_RUN=1` | Dry-run mode |
-| `make cron FOCUS="task"` | Focus on a task |
-| `make setup` | Setup wizard |
-| `make personai` | Persona config |
-| `make memory` | View memory |
-| `make memory-search TERM="x"` | Search memory |
-| `make status` | Show status |
-| `make audit` | Audit report |
-| `make rollback` | Rollback state |
-| `make logs` | View logs |
-| `make clean` | Cleanup |
-| `make dry-run` | Dry-run shortcut |
-| `make build` | Compile TypeScript |
-| `make install-global` | Build and install to `~/.cliclaw/bin/` |
-| `make dev <cmd>` | Run any command via tsx |
+| Target                        | Description                            |
+|-------------------------------|----------------------------------------|
+| `make cron`                   | Start the loop                         |
+| `make cron ENGINE=cursor`     | Use a specific engine                  |
+| `make cron DRY_RUN=1`         | Dry-run mode                           |
+| `make cron FOCUS="task"`      | Focus on a task                        |
+| `make setup`                  | Setup wizard                           |
+| `cliclaw personai`            | Agent identity config                  |
+| `make memory`                 | View memory                            |
+| `make memory-search TERM="x"` | Search memory                          |
+| `make status`                 | Show status                            |
+| `make audit`                  | Audit report                           |
+| `make rollback`               | Rollback state                         |
+| `make logs`                   | View logs                              |
+| `make clean`                  | Cleanup                                |
+| `make dry-run`                | Dry-run shortcut                       |
+| `make build`                  | Compile TypeScript                     |
+| `make install-global`         | Build and install to `~/.cliclaw/bin/` |
+| `make dev <cmd>`              | Run any command via tsx                |
