@@ -14,7 +14,7 @@ import { buildPrompt, estimatePromptTokens, hashPrompt, logPromptStats } from ".
 import { runCycle, runParallelCycles, stopAllAgents } from "../engines/runner.js";
 import { formatCost } from "../core/cost.js";
 import { saveSnapshot } from "../core/snapshots.js";
-import { runPreCycle, runPostCycle, runOnSuccess, runOnFailure } from "../core/hooks.js";
+import { runPreCycle, runPostCycle, runOnSuccess, runOnFailure, parseAgentSignals } from "../core/hooks.js";
 import { sendNotification } from "../utils/notify.js";
 import { isEngineAvailable } from "../engines/registry.js";
 import type { ClawConfig, EngineEntry } from "../core/types.js";
@@ -158,6 +158,7 @@ export async function cronCommand(args: string[]): Promise<void> {
     let totalTokens = 0;
     let totalCost = 0;
     let success = false;
+    let combinedOutput = "";
 
     if (config.parallel && config.engines.length > 1) {
       // Parallel: run all engines simultaneously
@@ -166,6 +167,7 @@ export async function cronCommand(args: string[]): Promise<void> {
         totalTokens += r.tokenEstimate;
         totalCost += r.costEstimate;
         if (r.exitCode === 0) success = true;
+        combinedOutput += r.stdout;
         const mem = extractMemoryAppend(r.stdout);
         if (mem) appendToMemory(paths.memoryFile, mem);
       }
@@ -177,12 +179,20 @@ export async function cronCommand(args: string[]): Promise<void> {
       totalTokens = result.tokenEstimate;
       totalCost = result.costEstimate;
       success = result.exitCode === 0;
+      combinedOutput = result.stdout;
       if (success) {
         const mem = extractMemoryAppend(result.stdout);
         if (mem) appendToMemory(paths.memoryFile, mem);
       } else if (result.stderr) {
         logError(`STDERR (tail): ${result.stderr.slice(-500)}`);
       }
+    }
+
+    const signals = parseAgentSignals(combinedOutput);
+
+    if (signals.skipCycle) {
+      logInfo(`Agent signal: [SKIP CYCLE] — skipping hooks and sleep for cycle ${cycle}`);
+      continue;
     }
 
     runPostCycle(config.hooks, config.projectRoot, cycle);
@@ -199,11 +209,21 @@ export async function cronCommand(args: string[]): Promise<void> {
       writeState("totalCostEstimate", Math.round((prevCost + totalCost) * 10000) / 10000);
       writeState("totalCycles", ((readState("totalCycles") as number | undefined) ?? 0) + 1);
 
-      const stallCycles = (readState("stallCycles") as number | undefined) ?? 0;
+      let stallCycles = (readState("stallCycles") as number | undefined) ?? 0;
+      if (signals.stallReset && stallCycles > 0) {
+        logInfo(`Agent signal: [STALL RESET] — stall counter cleared (was ${stallCycles})`);
+        stallCycles = 0;
+      }
       writeState("stallCycles", 0);
 
       runOnSuccess(config.hooks, config.projectRoot, cycle);
       logJson("cycle_complete", { cycle, tokens: totalTokens, cost: totalCost, exit_code: 0 });
+
+      if (signals.exit) {
+        logInfo(`Agent signal: [EXIT CLICLAW] — graceful termination requested`);
+        logJson("loop_stopped", { reason: "agent_exit_signal", cycle });
+        break;
+      }
 
       const sleepTime = computeSleep(config.sleepNormal, stallCycles);
       logInfo(`Sleeping ${sleepTime}s...`);

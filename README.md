@@ -85,6 +85,18 @@ CLIClaw uses an `engines` array as the primary config unit. The first engine is 
 
 When you have duplicate engines (e.g. two kiro instances), give each a unique `alias`. The setup wizard handles this automatically.
 
+## Agent Signals
+
+The AI can embed special signals in its response to control the loop:
+
+| Signal | Effect |
+|--------|--------|
+| `[EXIT CLICLAW]` | Gracefully stop the loop — the AI declares work done |
+| `[SKIP CYCLE]` | Skip hooks and sleep — nothing to do this cycle |
+| `[STALL RESET]` | Reset the stall/backoff counter — real progress was made |
+
+Teach your AI when to use them via `.cliclaw/meta/personai.md`. See [DETAILED.md](DETAILED.md#agent-signals) for full documentation.
+
 ## Supported Engines
 
 | Engine  | CLI          | Default Model            |

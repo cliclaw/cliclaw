@@ -169,6 +169,7 @@ Each engine in `src/engines/registry.ts` defines:
 - `model` — default model name
 - `lenientExit` — whether non-zero exit codes with output should be treated as success
 - `supportsResume` — whether the engine supports `--resume`/`--continue` flags
+- `parseOutput(stdout)` — optional; extracts human-readable text from JSON output (cursor, claude, gemini)
 
 ### Engine Runner
 
@@ -176,7 +177,7 @@ Each engine in `src/engines/registry.ts` defines:
 
 - Process spawning with configurable timeout
 - stdin-based prompt delivery (for cursor)
-- Real-time stdout streaming to log file
+- Output parsing — raw JSON decoded to human-readable text (cursor, claude, gemini)
 - Exit code handling (lenient — some engines exit non-zero on success)
 - Cost estimation per invocation
 - Parallel execution with task ledger coordination
@@ -195,12 +196,13 @@ The cron loop (`src/cli/cron.ts`) runs this cycle:
 4. **Build prompt** — Compose from meta files + task focus
 5. **Diff check** — Skip if prompt hash matches last cycle
 6. **Execute** — Spawn the AI agent (or log in dry-run mode)
-7. **Track** — Record cost, tokens, duration
-8. **Memory** — Extract and save any `MEMORY_APPEND` blocks from agent output
-9. **Hooks** — Run `onSuccess`/`onFailure` + `postCycle` scripts
-10. **Heartbeat** — Update `HEARTBEAT.md` with status
-11. **Sleep** — Adaptive sleep (exponential backoff on stalls, reset on progress)
-12. **Rotate** — Switch to next configured engine after 3 consecutive failures
+7. **Signals** — Parse agent signals (`[EXIT CLICLAW]`, `[SKIP CYCLE]`, `[STALL RESET]`) from output
+8. **Track** — Record cost, tokens, duration
+9. **Memory** — Extract and save any `MEMORY_APPEND` blocks from agent output
+10. **Hooks** — Run `onSuccess`/`onFailure` + `postCycle` scripts
+11. **Heartbeat** — Update `HEARTBEAT.md` with status
+12. **Sleep** — Adaptive sleep (exponential backoff on stalls, reset on progress)
+13. **Rotate** — Switch to next configured engine after 3 consecutive failures
 
 ### Adaptive Sleep
 
@@ -262,14 +264,47 @@ Detected secrets are redacted before the prompt is sent to any engine.
 
 Configure in `.cliclaw/config.json` under `hooks`:
 
-| Hook | When |
-|------|------|
-| `preCycle` | Before each cycle starts |
-| `postCycle` | After each cycle completes |
-| `onSuccess` | After a successful cycle |
-| `onFailure` | After a failed cycle |
+| Hook | When | Env vars |
+|------|------|----------|
+| `preCycle` | Before each cycle starts | `CLICLAW_CYCLE` |
+| `postCycle` | After each cycle completes (success or failure) | `CLICLAW_CYCLE` |
+| `onSuccess` | After a successful cycle | `CLICLAW_CYCLE` |
+| `onFailure` | After a failed cycle | `CLICLAW_CYCLE` |
 
 Each hook is a shell command string executed via `child_process.execSync` with a 60-second timeout. The `CLICLAW_CYCLE` environment variable is set to the current cycle number.
+
+```json
+{
+  "hooks": {
+    "preCycle": ["git fetch --quiet"],
+    "postCycle": [],
+    "onSuccess": ["git add -A && git commit -m 'cliclaw: auto-commit'", "npm run lint"],
+    "onFailure": ["./scripts/notify-slack.sh"]
+  }
+}
+```
+
+## Agent Signals
+
+Agent signals are special directives the AI can embed anywhere in its response to control the CLIClaw loop. They give the AI agency over the loop itself — it can declare work done, skip unnecessary cycles, or clear a stall.
+
+| Signal | Effect |
+|--------|--------|
+| `[EXIT CLICLAW]` | Gracefully terminate the loop after the current cycle completes (runs `onSuccess` hooks first) |
+| `[SKIP CYCLE]` | Skip hooks and sleep for this cycle — useful when the agent detects nothing to do |
+| `[STALL RESET]` | Reset the stall counter — use when the agent has made real progress that the loop didn't detect |
+
+**How to use them:** Instruct the AI in your `.cliclaw/meta/personai.md` or project prompt when to emit these signals. For example:
+
+```markdown
+When you have completed all outstanding tasks and there is nothing left to do,
+write [EXIT CLICLAW] at the end of your response.
+
+If you inspect the codebase and find no actionable work this cycle,
+write [SKIP CYCLE] to avoid unnecessary hooks and sleep delay.
+```
+
+Signals are detected in the parsed text output (after JSON decoding for engines like cursor/claude/gemini), so they work across all engines.
 
 ## Logging
 

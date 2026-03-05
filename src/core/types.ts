@@ -14,6 +14,8 @@ export interface EngineConfig {
   lenientExit: boolean;
   /** Whether this engine reads prompt from stdin instead of CLI arg */
   stdinPrompt: boolean;
+  /** Parse raw stdout into human-readable text. Falls back to raw stdout if absent. */
+  parseOutput?: (stdout: string) => string;
 }
 
 export interface EngineRunOpts {

@@ -5,6 +5,61 @@
 import { execSync } from "node:child_process";
 import type { EngineConfig, EngineName, EngineRunOpts } from "../core/types.js";
 
+/** Parse cursor stream-json: collect full assistant text messages (those with model_call_id) */
+function parseCursorOutput(stdout: string): string {
+  const parts: string[] = [];
+  for (const line of stdout.split("\n")) {
+    if (!line.trim()) continue;
+    try {
+      const obj = JSON.parse(line) as Record<string, unknown>;
+      if (obj["type"] === "assistant" && obj["model_call_id"]) {
+        const msg = obj["message"] as { content?: Array<{ type: string; text?: string }> } | undefined;
+        const text = msg?.content?.filter((c) => c.type === "text").map((c) => c.text ?? "").join("") ?? "";
+        if (text) parts.push(text);
+      }
+    } catch { /* skip non-JSON lines */ }
+  }
+  return parts.join("\n") || stdout;
+}
+
+/** Parse claude stream-json: extract text_delta events or fall back to result field */
+function parseClaudeOutput(stdout: string): string {
+  // Try stream-json format first
+  const parts: string[] = [];
+  let hasStreamEvents = false;
+  for (const line of stdout.split("\n")) {
+    if (!line.trim()) continue;
+    try {
+      const obj = JSON.parse(line) as Record<string, unknown>;
+      if (obj["type"] === "stream_event") {
+        hasStreamEvents = true;
+        const event = obj["event"] as { delta?: { type?: string; text?: string } } | undefined;
+        if (event?.delta?.type === "text_delta" && event.delta.text) {
+          parts.push(event.delta.text);
+        }
+      } else if (obj["type"] === "result" && typeof obj["result"] === "string") {
+        return obj["result"] as string;
+      }
+    } catch { /* skip */ }
+  }
+  if (hasStreamEvents && parts.length > 0) return parts.join("");
+  // Try plain json format
+  try {
+    const obj = JSON.parse(stdout.trim()) as Record<string, unknown>;
+    if (typeof obj["result"] === "string") return obj["result"] as string;
+  } catch { /* not json */ }
+  return stdout;
+}
+
+/** Parse gemini json output: extract .response field */
+function parseGeminiOutput(stdout: string): string {
+  try {
+    const obj = JSON.parse(stdout.trim()) as Record<string, unknown>;
+    if (typeof obj["response"] === "string") return obj["response"] as string;
+  } catch { /* not json */ }
+  return stdout;
+}
+
 const engines: Record<EngineName, EngineConfig> = {
   kiro: {
     name: "kiro",
@@ -29,8 +84,9 @@ const engines: Record<EngineName, EngineConfig> = {
     supportsResume: true,
     lenientExit: true,
     stdinPrompt: false,
+    parseOutput: parseClaudeOutput,
     buildArgs: (opts: EngineRunOpts) => {
-      const args = ["--dangerously-skip-permissions", "--model", opts.model];
+      const args = ["--dangerously-skip-permissions", "--model", opts.model, "--output-format", "stream-json", "--verbose"];
       if (opts.resume) args.push("--continue");
       args.push("-p", opts.prompt);
       return args;
@@ -44,6 +100,7 @@ const engines: Record<EngineName, EngineConfig> = {
     supportsResume: true,
     lenientExit: false,
     stdinPrompt: true,
+    parseOutput: parseCursorOutput,
     buildArgs: (opts: EngineRunOpts) => {
       const args = [
         "--yolo", "--model", opts.model, "--trust", "-p",
@@ -85,8 +142,9 @@ const engines: Record<EngineName, EngineConfig> = {
     supportsResume: false,
     lenientExit: true,
     stdinPrompt: false,
+    parseOutput: parseGeminiOutput,
     buildArgs: (opts: EngineRunOpts) => {
-      return ["--model", opts.model, "-p", opts.prompt];
+      return ["--model", opts.model, "--output-format", "json", "-p", opts.prompt];
     },
   },
   copilot: {

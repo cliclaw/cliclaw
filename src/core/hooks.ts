@@ -40,3 +40,24 @@ export function runOnSuccess(hooks: HooksConfig, cwd: string, cycle: number): vo
 export function runOnFailure(hooks: HooksConfig, cwd: string, cycle: number): void {
   runHooks(hooks.onFailure, "on-failure", cwd, { CLICLAW_CYCLE: String(cycle) });
 }
+
+export interface AgentSignals {
+  /** Agent requested graceful loop termination */
+  exit: boolean;
+  /** Agent requested this cycle be skipped (no hooks, no sleep) */
+  skipCycle: boolean;
+  /** Agent requested stall counter reset */
+  stallReset: boolean;
+}
+
+/**
+ * Parse agent signals embedded in output text.
+ * Signals are directives the AI writes to control the CLIClaw loop.
+ */
+export function parseAgentSignals(output: string): AgentSignals {
+  return {
+    exit: output.includes("[EXIT CLICLAW]"),
+    skipCycle: output.includes("[SKIP CYCLE]"),
+    stallReset: output.includes("[STALL RESET]"),
+  };
+}
