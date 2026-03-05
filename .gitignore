@@ -1,0 +1,6 @@
+node_modules/
+dist/
+.cliclaw/
+*.tmp
+*.tmp.*
+project.md

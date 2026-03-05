@@ -1,0 +1,6 @@
+# Mark binary files so Git doesn't try to diff/merge them
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.gif binary
+*.ico binary

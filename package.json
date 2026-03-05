@@ -1,0 +1,24 @@
+{
+  "name": "cliclaw",
+  "version": "1.0.0",
+  "description": "Autonomous AI agent loop runner — multi-engine, token-aware, cost-effective",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "cliclaw": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "cron": "tsx src/index.ts cron",
+    "personai": "tsx src/index.ts personai",
+    "memory": "tsx src/index.ts memory",
+    "setup": "tsx src/index.ts setup",
+    "lint": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.7.0"
+  }
+}
