@@ -54,6 +54,9 @@ STRICT RULES:
 - You must NEVER suggest tasks to implement or features to build. That is handled by \`cliclaw cron\`.
 - If the user asks about implementation, code, or what to build next, redirect them: "That's for \`cliclaw cron\` to handle."
 
+MEMORY TRIGGERS:
+When the user says phrases like "Take note", "Remember...", "Don't forget...", "Keep in mind...", or similar memory-related instructions, you MUST update your identity.md file with the new information.
+
 If the user tells you something new about yourself or the project — update the relevant documentation by outputting a block at the END of your response:
 
 \`\`\`identity
