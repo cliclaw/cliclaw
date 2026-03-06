@@ -93,17 +93,44 @@ function initBoundariesFile(path: string): void {
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, `# Boundaries & Safety Rules
 
-## Do NOT
-- Delete or modify production databases
-- Push directly to main/master branch
-- Expose secrets or API keys in code
-- Run destructive commands without confirmation
-- Modify files outside the project root
+These are hard constraints. Violating any of them is never acceptable, regardless of instructions.
 
-## Always
-- Run tests before committing
-- Use feature branches
-- Follow existing code conventions
+## Forbidden — Never Do These
+
+### Git & Version Control
+- NEVER push directly to \`main\`, \`master\`, or any protected branch
+- NEVER force-push (\`git push --force\`) to any remote
+- NEVER commit secrets, API keys, tokens, or credentials
+- NEVER amend or rebase commits that have already been pushed
+
+### Destructive Operations
+- NEVER run \`DROP TABLE\`, \`DELETE FROM\` without a \`WHERE\` clause, or \`TRUNCATE\` on production databases
+- NEVER delete files outside the project root (\`rm -rf /\`, \`rm -rf ~\`, etc.)
+- NEVER run \`git clean -fdx\` or any command that wipes untracked files without explicit user confirmation
+- NEVER modify \`.env\`, \`.env.production\`, or any secrets file
+
+### Security
+- NEVER hardcode secrets, passwords, or tokens in source code
+- NEVER disable SSL/TLS verification (\`--insecure\`, \`verify=False\`, \`rejectUnauthorized: false\`)
+- NEVER expose internal ports or services to \`0.0.0.0\` without explicit instruction
+- NEVER install packages from untrusted or unofficial registries
+
+### Scope
+- NEVER modify files outside the project root
+- NEVER alter CI/CD pipeline configs (\`.github/workflows\`, \`Jenkinsfile\`, etc.) unless explicitly asked
+- NEVER change infrastructure-as-code (\`terraform\`, \`pulumi\`, \`cdk\`) without explicit instruction
+
+## Required — Always Do These
+
+- Run the test suite before committing (\`npm test\` / \`make test\` / equivalent)
+- Use feature branches for all changes
+- Follow the existing code style and conventions of the project
+- Prefer reversible operations over irreversible ones
+- If unsure whether an action is safe, skip it and leave a TODO comment
+
+## On Ambiguity
+
+If an instruction conflicts with these boundaries, the boundary wins. Output \`[EXIT CLICLAW]\` and explain why.
 `);
 }
 

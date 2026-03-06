@@ -3,7 +3,7 @@
  * Features: adaptive sleep, engine rotation, parallel, hooks, snapshots, dry-run, notifications.
  */
 
-import { rmSync } from "node:fs";
+import { rmSync, readdirSync, readFileSync, existsSync } from "node:fs";
 import { resolveConfig, ensureAllDirs, primaryEngine } from "../core/config.js";
 import { initLogger, logInfo, logError, logWarn, logJson } from "../core/logger.js";
 import { initState, readState, writeState } from "../core/state.js";
@@ -27,9 +27,24 @@ function computeSleep(baseSleep: number, stallCycles: number, multiplier: number
   return Math.round(baseSleep * Math.min(Math.pow(multiplier, stallCycles), cap));
 }
 
-function parseArgs(args: string[]): { focus: string | null; overrides: Partial<ClawConfig> } {
+/** Find the most recent agent-input file in tmpDir, optionally filtered by engine/alias */
+function findLastPromptFile(tmpDir: string, engineAlias?: string): string | null {
+  if (!existsSync(tmpDir)) return null;
+  const files = readdirSync(tmpDir)
+    .filter((f) => f.startsWith("agent-input-") && f.endsWith(".txt"))
+    .filter((f) => !engineAlias || f.endsWith(`-${engineAlias}.txt`))
+    .sort((a, b) => {
+      const na = parseInt(a.split("-")[2] ?? "0", 10);
+      const nb = parseInt(b.split("-")[2] ?? "0", 10);
+      return nb - na;
+    });
+  return files[0] ? `${tmpDir}/${files[0]}` : null;
+}
+
+function parseArgs(args: string[]): { focus: string | null; overrides: Partial<ClawConfig>; continueMode: boolean } {
   const overrides: Partial<ClawConfig> = {};
   let focus: string | null = null;
+  let continueMode = false;
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -65,6 +80,9 @@ function parseArgs(args: string[]): { focus: string | null; overrides: Partial<C
       case "--parallel":
         overrides.parallel = true;
         break;
+      case "--continue":
+        continueMode = true;
+        break;
       default:
         if (arg && !arg.startsWith("--")) {
           focus = arg;
@@ -73,11 +91,11 @@ function parseArgs(args: string[]): { focus: string | null; overrides: Partial<C
     }
   }
 
-  return { focus, overrides };
+  return { focus, overrides, continueMode };
 }
 
 export async function cronCommand(args: string[]): Promise<void> {
-  const { focus, overrides } = parseArgs(args);
+  const { focus, overrides, continueMode } = parseArgs(args);
   const config = resolveConfig({ ...overrides, focusFilter: focus });
   const { paths } = config;
 
@@ -149,7 +167,21 @@ export async function cronCommand(args: string[]): Promise<void> {
 
     const enableDiff = cycle > 1 && cycle % config.freshSessionEvery !== 0;
     const active = config.engines[activeIdx] ?? primary;
-    const prompt = buildPrompt(config, enableDiff, cycle, active);
+
+    let prompt: string;
+    if (continueMode && cycle === 1) {
+      const alias = active.alias ?? active.engine;
+      const lastFile = findLastPromptFile(paths.tmpDir, alias) ?? findLastPromptFile(paths.tmpDir);
+      if (lastFile) {
+        prompt = readFileSync(lastFile, "utf-8");
+        logInfo(`--continue: reusing prompt from ${lastFile}`);
+      } else {
+        logWarn("--continue: no previous prompt file found, building fresh prompt");
+        prompt = buildPrompt(config, false, cycle, active);
+      }
+    } else {
+      prompt = buildPrompt(config, enableDiff, cycle, active);
+    }
     logPromptStats(prompt);
 
     if (config.dryRun) {

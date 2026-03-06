@@ -137,6 +137,26 @@ describe("extractMemoryAppend", () => {
   it("returns empty string when no block", () => {
     expect(extractMemoryAppend("no memory block here")).toBe("");
   });
+
+  it("rejects unfilled placeholder text", () => {
+    const output = "<!-- MEMORY_APPEND\nyour concise insight here (replace this line)\n-->";
+    expect(extractMemoryAppend(output)).toBe("");
+  });
+
+  it("rejects legacy placeholder text", () => {
+    const output = "<!-- MEMORY_APPEND\nyour concise, high-value insight here\n-->";
+    expect(extractMemoryAppend(output)).toBe("");
+  });
+
+  it("handles extra whitespace around the block", () => {
+    const output = "<!--  MEMORY_APPEND  \n  real insight  \n  -->";
+    expect(extractMemoryAppend(output)).toBe("real insight");
+  });
+
+  it("extracts multi-line entries", () => {
+    const output = "<!-- MEMORY_APPEND\nline one\nline two\n-->";
+    expect(extractMemoryAppend(output)).toBe("line one\nline two");
+  });
 });
 
 describe("getMemoryStats", () => {

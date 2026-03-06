@@ -75,8 +75,11 @@ export function trimMemory(memoryFile: string, maxLines = MAX_LINES, keepHead = 
 }
 
 export function extractMemoryAppend(output: string): string {
-  const match = output.match(/<!-- MEMORY_APPEND\n([\s\S]*?)\n-->/);
-  return match?.[1]?.trim() ?? "";
+  const match = output.match(/<!--\s*MEMORY_APPEND\s*\n([\s\S]*?)\n\s*-->/);
+  const entry = match?.[1]?.trim() ?? "";
+  // Reject unfilled template placeholders
+  if (!entry || entry.includes("your concise") || entry.includes("high-value insight here")) return "";
+  return entry;
 }
 
 export function getMemoryStats(memoryFile: string): { lines: number; tokens: number } {

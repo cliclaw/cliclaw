@@ -144,11 +144,9 @@ export function buildPrompt(config: ClawConfig, enableDiff = false, cycle = 0, a
 - If no tasks are defined, look for TODOs, failing tests, or improvements to make.
 - Work incrementally — complete one meaningful unit of work per cycle.
 - If you learned something durable, output exactly:
-\`\`\`
 <!-- MEMORY_APPEND
-your concise, high-value insight here
--->
-\`\`\``);
+your concise insight here (replace this line)
+-->`);
 
   let prompt = parts.join("\n");
 
