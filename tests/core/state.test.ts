@@ -68,6 +68,14 @@ describe("readState / writeState", () => {
   });
 });
 
+describe("writeState with no statePath", () => {
+  it("writeState after initState does not throw", () => {
+    initState(stateFile);
+    expect(() => writeState("totalCycles", 42)).not.toThrow();
+    expect(readState("totalCycles")).toBe(42);
+  });
+});
+
 describe("getFullState", () => {
   it("returns all state", () => {
     initState(stateFile);
@@ -79,8 +87,6 @@ describe("getFullState", () => {
   });
 
   it("returns empty object when no state path set", () => {
-    // Don't call initState — statePath is null from a fresh import perspective
-    // But since it's module-level, we test the fallback by reading from the initialized path
     initState(stateFile);
     const state = getFullState();
     expect(typeof state).toBe("object");

@@ -50,6 +50,15 @@ describe("saveSnapshot", () => {
     const files = readdirSync(snapshotsDir).filter((f) => f.startsWith("state-cycle-"));
     expect(files.length).toBeLessThanOrEqual(20);
   });
+
+  it("respects custom maxSnapshots limit", () => {
+    writeFileSync(stateFile, "{}");
+    for (let i = 1; i <= 10; i++) {
+      saveSnapshot(snapshotsDir, stateFile, i, 5);
+    }
+    const files = readdirSync(snapshotsDir).filter((f) => f.startsWith("state-cycle-"));
+    expect(files.length).toBeLessThanOrEqual(5);
+  });
 });
 
 describe("listSnapshots", () => {

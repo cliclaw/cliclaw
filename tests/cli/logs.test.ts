@@ -96,4 +96,24 @@ describe("logsCommand", () => {
     await logsCommand(["--tail"]).catch(() => {}); // May throw or not
     // Just verify it doesn't crash
   });
+
+  it("handles -f alias for --tail", async () => {
+    const paths = buildPaths(testDir);
+    ensureAllDirs(paths);
+    writeFileSync(paths.cycleOut, "some output\n");
+
+    const stdoutSpy = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
+    const promise = Promise.race([
+      logsCommand(["-f"]),
+      new Promise<void>((r) => setTimeout(r, 50)),
+    ]);
+    await promise;
+    stdoutSpy.mockRestore();
+  });
+
+  it("shows no logs message when jsonl file missing", async () => {
+    await logsCommand(["--json"]);
+    const output = consoleSpy.mock.calls.map((c) => c[0]).join("\n");
+    expect(output).toContain("No logs found");
+  });
 });

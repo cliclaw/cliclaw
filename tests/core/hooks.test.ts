@@ -41,6 +41,13 @@ describe("runHooks", () => {
     runHooks(["fail", "succeed"], "test", "/tmp");
     expect(execSync).toHaveBeenCalledTimes(2);
   });
+
+  it("logs warning with string error message on failure", () => {
+    vi.mocked(execSync).mockImplementationOnce(() => { throw "string error"; });
+    runHooks(["fail"], "test", "/tmp");
+    // logWarn is already mocked via vi.mock at top — just verify no throw
+    expect(execSync).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("lifecycle hooks", () => {

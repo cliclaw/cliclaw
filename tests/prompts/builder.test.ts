@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { mkdirSync, writeFileSync, rmSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
@@ -190,6 +190,45 @@ describe("buildPrompt", () => {
     const config = makeConfig();
     buildPrompt(config);
     expect(scanAndRedact).toHaveBeenCalled();
+  });
+
+  it("logs warning when secrets are redacted", async () => {
+    const { scanAndRedact } = await import("../src/core/secrets.js");
+    const { logWarn } = await import("../src/core/logger.js");
+    vi.mocked(scanAndRedact).mockReturnValueOnce({ clean: "cleaned", redacted: 2, findings: ["AWS Key: AKIA1234..."] });
+    const config = makeConfig();
+    buildPrompt(config);
+    expect(logWarn).toHaveBeenCalledWith(expect.stringContaining("redacted 2"));
+  });
+
+  it("includes persistent memory when present", async () => {
+    const { readMemorySnippet } = await import("../src/core/memory.js");
+    vi.mocked(readMemorySnippet).mockReturnValueOnce("learned: always use feature branches");
+    const config = makeConfig();
+    const prompt = buildPrompt(config);
+    expect(prompt).toContain("Persistent Memory");
+    expect(prompt).toContain("learned: always use feature branches");
+  });
+
+  it("skips memory section when no persistent memory", async () => {
+    const { readMemorySnippet } = await import("../src/core/memory.js");
+    vi.mocked(readMemorySnippet).mockReturnValueOnce("(no persistent memory yet)");
+    const config = makeConfig();
+    const prompt = buildPrompt(config);
+    expect(prompt).not.toContain("Persistent Memory");
+  });
+
+  it("runs with enableDiff=true without throwing", () => {
+    const config = makeConfig();
+    writeFileSync(config.paths.youFile, "## Role\nDeveloper\n\n## Stack\nNode.js");
+    expect(() => buildPrompt(config, true, 2)).not.toThrow();
+  });
+
+  it("truncates long meta section content", () => {
+    const config = makeConfig({ promptBudgets: { memory: 500, you: 5, projects: 600, boundaries: 200, identity: 200, tools: 300, boot: 300 } });
+    writeFileSync(config.paths.youFile, "## Role\n" + "word ".repeat(200));
+    const prompt = buildPrompt(config);
+    expect(prompt).toContain("truncated");
   });
 });
 

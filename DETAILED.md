@@ -139,6 +139,8 @@ All other top-level fields are optional and fall back to defaults:
 | `maxLoop`                  | `500`   | Max cycles before stopping                                           |
 | `sleepNormal`              | `60`    | Seconds to sleep after a successful cycle                            |
 | `idleBeforeStart`          | `0`     | Seconds to pause before the loop starts (0 = no pause)              |
+| `agentTimeout`             | `86400` | Max seconds a single cycle can run before force-kill (24h default)   |
+| `outputStallTimeout`       | `600`   | Kill agent if no new output bytes arrive within N seconds (0 = off)  |
 | `tokenBudget`              | `8000`  | Max tokens per prompt (0 = unlimited)                                |
 | `maxConcurrent`            | `2`     | Max parallel engines when using `--parallel`                         |
 | `snapshotEvery`            | `4`     | Save a state snapshot every N cycles                                 |
@@ -245,6 +247,29 @@ The cron loop (`src/cli/cron.ts`) runs this cycle:
 ### Engine Rotation
 
 After `engineRotateAfter` consecutive failures (default 3) with the current engine, CLIClaw rotates to the next engine in the configured `engines` array. This prevents getting stuck when one engine is down or rate-limited.
+
+### Output Stall Detection
+
+CLIClaw monitors the agent's stdout byte rate. If no new output arrives within `outputStallTimeout` seconds (default 600), the agent is force-killed with `SIGTERM` → `SIGKILL`.
+
+This catches a common failure mode: the agent runs a shell command that hangs silently (e.g. a piped command where the reader never gets EOF), producing no output while the overall `agentTimeout` (24h) would otherwise let it sit indefinitely.
+
+**Root cause of pipe hangs in non-TTY environments:**
+
+AI agents are spawned without a TTY (`stdio: pipe`). When the agent then runs a shell command like `make e2e-bdd 2>&1 | tail -30`, the following can happen:
+
+1. The subprocess (Playwright, make, etc.) detects no TTY and buffers stdout aggressively
+2. `tail -30` waits for EOF from the pipe, but the subprocess never closes its end
+3. The agent's tool call never returns — the cycle is stuck
+
+**Recommended patterns for your `tools.md`:**
+
+```markdown
+## Shell Command Guidelines
+- Avoid `cmd | tail -N` or `cmd | head -N` for long-running processes — use `cmd > /tmp/out.txt && tail -N /tmp/out.txt` instead
+- Prefer `cmd 2>&1 | tee /tmp/out.txt` over bare pipes when you need to capture and display output
+- For test runners, redirect to a file first: `make test > /tmp/test.out 2>&1; tail -50 /tmp/test.out`
+```
 
 ## Vector Memory
 

@@ -57,6 +57,7 @@ function spawnAgent(
     let stdout = "";
     let stderr = "";
     let timedOut = false;
+    let outputStallTimer: ReturnType<typeof setTimeout> | null = null;
 
     const child = spawn(engine.command, args, {
       cwd: config.projectRoot,
@@ -76,12 +77,28 @@ function spawnAgent(
     const pid = child.pid;
     if (pid) currentAgentPids.push(pid);
 
+    const stallMs = config.outputStallTimeout > 0 ? config.outputStallTimeout * 1000 : 0;
+
+    const resetOutputStallTimer = (): void => {
+      if (!stallMs) return;
+      if (outputStallTimer) clearTimeout(outputStallTimer);
+      outputStallTimer = setTimeout(() => {
+        logWarn(`Agent produced no output for ${config.outputStallTimeout}s — killing (output stall)`);
+        timedOut = true;
+        if (pid) killPidTree(pid, "SIGTERM");
+        setTimeout(() => { if (pid) killPidTree(pid, "SIGKILL"); }, 1000);
+      }, stallMs);
+    };
+
+    resetOutputStallTimer();
+
     // Truncate cycleOut at start of cycle so --tail sees only current run
     try { writeFileSync(config.paths.cycleOut, ""); } catch { /* ignore */ }
 
     child.stdout?.on("data", (chunk: Buffer) => {
       const text = chunk.toString();
       stdout += text;
+      resetOutputStallTimer();
       try { appendFileSync(config.paths.cycleOut, text); } catch { /* ignore */ }
     });
     child.stderr?.on("data", (chunk: Buffer) => { stderr += chunk.toString(); });
@@ -106,6 +123,7 @@ function spawnAgent(
     child.on("close", (code) => {
       clearTimeout(timer);
       clearInterval(progressInterval);
+      if (outputStallTimer) clearTimeout(outputStallTimer);
       process.stderr.write("\n");
       if (pid) currentAgentPids = currentAgentPids.filter((p) => p !== pid);
 
@@ -143,6 +161,7 @@ function spawnAgent(
     child.on("error", (err) => {
       clearTimeout(timer);
       clearInterval(progressInterval);
+      if (outputStallTimer) clearTimeout(outputStallTimer);
       process.stderr.write("\n");
       if (pid) currentAgentPids = currentAgentPids.filter((p) => p !== pid);
 

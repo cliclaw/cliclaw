@@ -5,7 +5,7 @@ vi.mock("node:child_process", () => ({
 }));
 
 import { execSync } from "node:child_process";
-import { getEngine, getAllEngines, isEngineAvailable } from "../src/engines/registry.js";
+import { getEngine, getAllEngines, isEngineAvailable, parseStreamLine } from "../src/engines/registry.js";
 
 describe("getEngine", () => {
   it("returns config for all known engines", () => {
@@ -131,5 +131,155 @@ describe("isEngineAvailable", () => {
 
   it("returns false for unknown engine", () => {
     expect(isEngineAvailable("unknown" as any)).toBe(false);
+  });
+});
+
+describe("parseStreamLine", () => {
+  it("returns null for empty/whitespace line", () => {
+    expect(parseStreamLine("")).toBeNull();
+    expect(parseStreamLine("   ")).toBeNull();
+  });
+
+  it("returns plain text line with newline", () => {
+    expect(parseStreamLine("hello world")).toBe("hello world\n");
+  });
+
+  it("parses cursor full assistant message (with model_call_id)", () => {
+    const line = JSON.stringify({
+      type: "assistant",
+      model_call_id: "abc",
+      message: { content: [{ type: "text", text: "cursor output" }] },
+    });
+    expect(parseStreamLine(line)).toBe("cursor output\n");
+  });
+
+  it("returns null for cursor full message with no text content", () => {
+    const line = JSON.stringify({
+      type: "assistant",
+      model_call_id: "abc",
+      message: { content: [{ type: "tool_use" }] },
+    });
+    expect(parseStreamLine(line)).toBeNull();
+  });
+
+  it("parses cursor streaming delta (no model_call_id)", () => {
+    const line = JSON.stringify({
+      type: "assistant",
+      message: { content: [{ type: "text", text: "delta" }] },
+    });
+    expect(parseStreamLine(line)).toBe("delta");
+  });
+
+  it("returns null for cursor delta with no text", () => {
+    const line = JSON.stringify({
+      type: "assistant",
+      message: { content: [{ type: "tool_use" }] },
+    });
+    expect(parseStreamLine(line)).toBeNull();
+  });
+
+  it("parses claude text_delta stream event", () => {
+    const line = JSON.stringify({
+      type: "stream_event",
+      event: { delta: { type: "text_delta", text: "claude chunk" } },
+    });
+    expect(parseStreamLine(line)).toBe("claude chunk");
+  });
+
+  it("returns null for non-text_delta stream event", () => {
+    const line = JSON.stringify({
+      type: "stream_event",
+      event: { delta: { type: "input_json_delta" } },
+    });
+    expect(parseStreamLine(line)).toBeNull();
+  });
+
+  it("parses claude result line", () => {
+    const line = JSON.stringify({ type: "result", result: "final answer" });
+    expect(parseStreamLine(line)).toBe("final answer\n");
+  });
+
+  it("returns null for unrecognized JSON object", () => {
+    const line = JSON.stringify({ type: "unknown_event" });
+    expect(parseStreamLine(line)).toBeNull();
+  });
+});
+
+describe("parseOutput functions", () => {
+  describe("cursor parseOutput (parseCursorOutput)", () => {
+    const engine = getEngine("cursor");
+
+    it("extracts text from assistant messages with model_call_id", () => {
+      const line = JSON.stringify({
+        type: "assistant",
+        model_call_id: "abc",
+        message: { content: [{ type: "text", text: "hello" }] },
+      });
+      expect(engine.parseOutput!(line)).toBe("hello");
+    });
+
+    it("falls back to raw stdout when no matching lines", () => {
+      expect(engine.parseOutput!("plain text output")).toBe("plain text output");
+    });
+
+    it("skips non-JSON lines", () => {
+      const line = JSON.stringify({
+        type: "assistant",
+        model_call_id: "abc",
+        message: { content: [{ type: "text", text: "msg" }] },
+      });
+      expect(engine.parseOutput!("not json\n" + line)).toBe("msg");
+    });
+
+    it("skips assistant messages without model_call_id", () => {
+      const line = JSON.stringify({ type: "assistant", message: { content: [{ type: "text", text: "skip" }] } });
+      expect(engine.parseOutput!(line)).toBe(line);
+    });
+  });
+
+  describe("claude parseOutput (parseClaudeOutput)", () => {
+    const engine = getEngine("claude");
+
+    it("extracts text from stream_event text_delta lines", () => {
+      const line = JSON.stringify({
+        type: "stream_event",
+        event: { delta: { type: "text_delta", text: "chunk" } },
+      });
+      expect(engine.parseOutput!(line)).toBe("chunk");
+    });
+
+    it("returns result field from result line", () => {
+      const line = JSON.stringify({ type: "result", result: "final" });
+      expect(engine.parseOutput!(line)).toBe("final");
+    });
+
+    it("parses plain JSON with result field", () => {
+      expect(engine.parseOutput!(JSON.stringify({ result: "plain json" }))).toBe("plain json");
+    });
+
+    it("falls back to raw stdout for unrecognized format", () => {
+      expect(engine.parseOutput!("raw output")).toBe("raw output");
+    });
+
+    it("skips non-text_delta stream events", () => {
+      const line = JSON.stringify({ type: "stream_event", event: { delta: { type: "other" } } });
+      expect(engine.parseOutput!(line)).toBe(line);
+    });
+  });
+
+  describe("gemini parseOutput (parseGeminiOutput)", () => {
+    const engine = getEngine("gemini");
+
+    it("extracts response field from JSON", () => {
+      expect(engine.parseOutput!(JSON.stringify({ response: "gemini answer" }))).toBe("gemini answer");
+    });
+
+    it("falls back to raw stdout for non-JSON", () => {
+      expect(engine.parseOutput!("raw gemini output")).toBe("raw gemini output");
+    });
+
+    it("falls back when response field is not a string", () => {
+      expect(engine.parseOutput!(JSON.stringify({ response: 42 }))).toBe(JSON.stringify({ response: 42 }));
+    });
   });
 });

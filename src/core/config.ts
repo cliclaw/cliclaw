@@ -115,6 +115,7 @@ export const CONFIG_DEFAULTS = {
   sleepNormal: 60,
   sleepAfterFailure: 90,
   agentTimeout: 86400,
+  outputStallTimeout: 600,
   freshSessionEvery: 3,
   maxConcurrent: 2,
   tokenBudget: 8000,
@@ -151,6 +152,7 @@ export function resolveConfig(overrides: Partial<ClawConfig> = {}): ClawConfig {
     sleepNormal: overrides.sleepNormal ?? projectCfg.sleepNormal ?? envInt("CLICLAW_SLEEP", CONFIG_DEFAULTS.sleepNormal),
     sleepAfterFailure: projectCfg.sleepAfterFailure ?? envInt("CLICLAW_SLEEP_FAIL", CONFIG_DEFAULTS.sleepAfterFailure),
     agentTimeout: projectCfg.agentTimeout ?? envInt("CLICLAW_TIMEOUT", CONFIG_DEFAULTS.agentTimeout),
+    outputStallTimeout: projectCfg.outputStallTimeout ?? envInt("CLICLAW_OUTPUT_STALL_TIMEOUT", CONFIG_DEFAULTS.outputStallTimeout),
     freshSessionEvery: projectCfg.freshSessionEvery ?? envInt("CLICLAW_FRESH_EVERY", CONFIG_DEFAULTS.freshSessionEvery),
     promptHeader: env(
       "CLICLAW_PROMPT_HEADER",

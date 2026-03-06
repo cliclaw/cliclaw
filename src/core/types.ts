@@ -53,6 +53,8 @@ export interface ClawConfig {
   sleepNormal: number;
   sleepAfterFailure: number;
   agentTimeout: number;
+  /** Seconds of no new output before killing the agent (0 = disabled) */
+  outputStallTimeout: number;
   freshSessionEvery: number;
   promptHeader: string;
   focusFilter: string | null;
@@ -167,6 +169,7 @@ export interface ProjectConfig {
   sleepNormal?: number;
   sleepAfterFailure?: number;
   agentTimeout?: number;
+  outputStallTimeout?: number;
   freshSessionEvery?: number;
   tokenBudget?: number;
   maxConcurrent?: number;
