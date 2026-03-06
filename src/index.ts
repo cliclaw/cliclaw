@@ -15,6 +15,7 @@ import { logsCommand } from "./cli/logs.js";
 import { auditCommand } from "./cli/audit.js";
 import { rollbackCommand } from "./cli/rollback.js";
 import { upgradeCommand } from "./cli/upgrade.js";
+import { chatCommand } from "./cli/chat.js";
 
 const HELP = `
 CLIClaw — Autonomous AI Agent Loop Runner
@@ -25,6 +26,8 @@ Usage:
 Commands:
   cron [focus]           Start the autonomous agent loop
                          Options: --engine, --model, --dry-run, --parallel, --focus, --max-loop, --sleep
+  chat                   Interactive chat that updates agent identity
+                         Options: --engine=<alias|engine>
   setup                  Interactive setup wizard
   identity               Configure agent identity interactively
   memory                 View and optimize persistent memory
@@ -47,6 +50,7 @@ type CommandFn = (args: string[]) => Promise<void>;
 
 const commands: Record<string, CommandFn> = {
   cron: cronCommand,
+  chat: chatCommand,
   setup: setupCommand,
   identity: identityCommand,
   memory: memoryCommand,

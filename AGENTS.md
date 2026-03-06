@@ -30,6 +30,7 @@ tests/                    # Vitest test suite (27 files, 247 tests, ~93% coverag
 ```
 
 Key patterns:
+
 - Config cascade: CLI args → project `.cliclaw/config.json` → env vars → defaults
 - **`engines` array is the primary config unit** — first entry is primary, all are used for rotation and parallel execution
 - Each engine entry has `engine`, `model`, optional `alias` (required for duplicates), optional `focus`
@@ -72,3 +73,13 @@ Key patterns:
 - Modify meta file templates without updating the prompt builder's cleaning logic
 - Break the config cascade order (CLI > project config > env > defaults)
 - Use top-level `engine`/`model` in config — always use the `engines` array
+
+## Feature Development Rules
+
+Every new feature or change **must**:
+
+1. **Have tests** — write test cases in `tests/` covering the new behaviour. Run `npm test` and confirm all pass before considering the work done.
+2. **Be documented** — update `DETAILED.md` with a section describing the feature: what it does, how to use it, any config options, and relevant edge cases. Update `README.md` if it affects user-facing commands.
+3. **Pass the build** — run `make build` (or `npx tsc --noEmit`) and confirm zero TypeScript errors.
+
+No feature is complete until all three are done.

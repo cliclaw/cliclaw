@@ -138,7 +138,7 @@ All other top-level fields are optional and fall back to defaults:
 |----------------------------|---------|----------------------------------------------------------------------|
 | `maxLoop`                  | `500`   | Max cycles before stopping                                           |
 | `sleepNormal`              | `60`    | Seconds to sleep after a successful cycle                            |
-| `idleBeforeStart`          | `0`     | Seconds to pause before the loop starts (0 = no pause)              |
+| `idleBeforeStart`          | `0`     | Seconds to pause before the loop starts (0 = no pause)               |
 | `agentTimeout`             | `86400` | Max seconds a single cycle can run before force-kill (24h default)   |
 | `outputStallTimeout`       | `600`   | Kill agent if no new output bytes arrive within N seconds (0 = off)  |
 | `tokenBudget`              | `8000`  | Max tokens per prompt (0 = unlimited)                                |
@@ -173,7 +173,7 @@ CLIClaw builds prompts from meta files in priority order:
 | 4        | `.cliclaw/meta/boundaries.md` | Hard rules the agent must never violate  |
 | 5        | `.cliclaw/meta/identity.md`   | Agent identity: name, role, mission      |
 | 6        | `.cliclaw/meta/tools.md`      | Available tools and CLI commands         |
-| 7        | `.cliclaw/meta/boot.md`       | Startup instructions — cycle 1 only     |
+| 7        | `.cliclaw/meta/boot.md`       | Startup instructions — cycle 1 only      |
 
 These are created by `cliclaw setup` and `cliclaw identity`. The prompt builder strips template boilerplate, empty placeholders, and HTML comments before composing the final prompt.
 
@@ -319,28 +319,33 @@ Detected secrets are redacted before the prompt is sent to any engine.
 Effective boundaries are **specific, unambiguous, and cover the blast radius** of autonomous operation. The generated template covers:
 
 **Git & version control**
+
 - No direct pushes to protected branches (`main`, `master`)
 - No force-pushes to any remote
 - No committing secrets or credentials
 - No amending/rebasing already-pushed commits
 
 **Destructive operations**
+
 - No `DROP TABLE` / `TRUNCATE` / unscoped `DELETE` on production databases
 - No deleting files outside the project root
 - No `git clean -fdx` without explicit confirmation
 - No modifying `.env` or secrets files
 
 **Security**
+
 - No hardcoded secrets in source code
 - No disabling SSL/TLS verification
 - No exposing services to `0.0.0.0` without instruction
 - No installing packages from untrusted registries
 
 **Scope**
+
 - No modifying files outside the project root
 - No touching CI/CD configs or IaC without explicit instruction
 
 **Ambiguity resolution**
+
 - If an instruction conflicts with a boundary, the boundary wins
 - Agent should output `[EXIT CLICLAW]` and explain why
 
@@ -436,7 +441,52 @@ npm test                # Run all tests
 npm run test:coverage   # Run with coverage report
 ```
 
-27 test files, 247 tests. Coverage: ~93% statements, ~95% lines.
+27 test files, 317 tests. Coverage: ~93% statements, ~95% lines.
+
+## `cliclaw chat`
+
+An interactive TUI chat session with the configured AI engine. Unlike `cliclaw cron` which autonomously executes tasks, `chat` is for **documentation and identity management only** — the agent will not write code or suggest implementations.
+
+```bash
+cliclaw chat                  # Use primary engine
+cliclaw chat --engine=kiro    # Use specific engine by alias or name
+```
+
+### Behaviour
+
+- Loads all meta files on every turn (identity, memory, boundaries, you, projects, tools) — same context as cron
+- Conversation history persists to `.cliclaw/tmp/chat-{engine}.json` and auto-resumes on next session
+- Agent decides autonomously when to update `identity.md` — outputs a fenced ` ```identity ``` ` block only when something changed
+- Streams agent output live to the terminal with a spinner while waiting for the first token
+- Agent label uses the name from `identity.md` (`**Name**: X`)
+
+### Slash commands
+
+| Command    | Description                                    |
+|------------|------------------------------------------------|
+| `/clear`   | Wipe conversation history (keeps meta context) |
+| `/history` | Show timestamped conversation log              |
+| `/help`    | List available commands                        |
+| `/exit`    | Exit chat                                      |
+
+### History summarization
+
+To keep prompts within token budget across long sessions, history is split:
+
+- Last `RECENT_TURNS * 2` messages (20) are fed verbatim
+- Older messages are collapsed into a single digest line of user topics
+
+### Agent restrictions
+
+The chat agent is **documentation-only**:
+
+- May discuss, update, or clarify any `.cliclaw` meta file content
+- Will **not** write code, pseudocode, or implementation suggestions
+- Redirects implementation questions to `cliclaw cron`
+
+### Hot-reload
+
+`cliclaw cron` reads all `.cliclaw` meta files fresh on every cycle — changes made via `cliclaw chat` (or manually) take effect on the next cron cycle with no restart needed.
 
 ## Makefile (Development)
 
