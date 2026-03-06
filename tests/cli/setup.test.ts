@@ -198,7 +198,7 @@ describe("setupCommand", () => {
     expect(config.maxConsecutiveFailures).toBe(5);
     expect(config.sleepNormal).toBe(60);
     expect(config.sleepAfterFailure).toBe(90);
-    expect(config.agentTimeout).toBe(86400);
+    expect(config.agentTimeout).toBe(3600);
     expect(config.freshSessionEvery).toBe(3);
     expect(config.maxConcurrent).toBe(2);
     expect(config.idleBeforeStart).toBe(0);

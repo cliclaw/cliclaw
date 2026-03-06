@@ -96,7 +96,7 @@ src/
 | `CLICLAW_MAX_LOOP`       | `500`        | Max loop cycles                           |
 | `CLICLAW_SLEEP`          | `60`         | Sleep between cycles (seconds)            |
 | `CLICLAW_SLEEP_FAIL`     | `90`         | Sleep after failure (seconds)             |
-| `CLICLAW_TIMEOUT`        | `86400`      | Agent timeout per cycle (seconds)         |
+| `CLICLAW_TIMEOUT`        | `3600`      | Agent timeout per cycle (seconds)         |
 | `CLICLAW_FRESH_EVERY`    | `3`          | Start fresh session every N cycles        |
 | `CLICLAW_TOKEN_BUDGET`   | `8000`       | Max tokens per prompt (0 = unlimited)     |
 | `CLICLAW_MAX_CONCURRENT` | `2`          | Max parallel engines                      |
@@ -139,7 +139,7 @@ All other top-level fields are optional and fall back to defaults:
 | `maxLoop`                  | `500`   | Max cycles before stopping                                           |
 | `sleepNormal`              | `60`    | Seconds to sleep after a successful cycle                            |
 | `idleBeforeStart`          | `0`     | Seconds to pause before the loop starts (0 = no pause)               |
-| `agentTimeout`             | `86400` | Max seconds a single cycle can run before force-kill (24h default)   |
+| `agentTimeout`             | `3600` | Max seconds a single cycle can run before force-kill (24h default)   |
 | `outputStallTimeout`       | `600`   | Kill agent if no new output bytes arrive within N seconds (0 = off)  |
 | `tokenBudget`              | `8000`  | Max tokens per prompt (0 = unlimited)                                |
 | `maxConcurrent`            | `2`     | Max parallel engines when using `--parallel`                         |

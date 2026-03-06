@@ -114,7 +114,7 @@ export const CONFIG_DEFAULTS = {
   maxConsecutiveFailures: 5,
   sleepNormal: 60,
   sleepAfterFailure: 90,
-  agentTimeout: 86400,
+  agentTimeout: 3600,
   outputStallTimeout: 600,
   freshSessionEvery: 3,
   maxConcurrent: 2,

@@ -10,7 +10,7 @@
   "maxConsecutiveFailures": 5,
   "sleepNormal": 1800,
   "sleepAfterFailure": 90,
-  "agentTimeout": 86400,
+  "agentTimeout": 3600,
   "freshSessionEvery": 3,
   "maxConcurrent": 2,
   "idleBeforeStart": 0,
