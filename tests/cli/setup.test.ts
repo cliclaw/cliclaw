@@ -194,7 +194,7 @@ describe("setupCommand", () => {
     expect(config.tokenBudget).toBe(4000);
 
     // All fields must be explicitly present — no hidden defaults
-    expect(config.maxLoop).toBe(500);
+    expect(config.maxLoop).toBe(0);
     expect(config.maxConsecutiveFailures).toBe(5);
     expect(config.sleepNormal).toBe(60);
     expect(config.sleepAfterFailure).toBe(90);

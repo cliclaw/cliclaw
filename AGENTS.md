@@ -79,7 +79,23 @@ Key patterns:
 Every new feature or change **must**:
 
 1. **Have tests** — write test cases in `tests/` covering the new behaviour. Run `npm test` and confirm all pass before considering the work done.
-2. **Be documented** — update `DETAILED.md` with a section describing the feature: what it does, how to use it, any config options, and relevant edge cases. Update `README.md` if it affects user-facing commands.
+2. **Be documented** — update `DETAILED.md` with a section describing the feature: what it does, how to use it, any config options, and relevant edge cases. Update `README.md` if it affects user-facing commands. Update `AGENTS.md` if it changes architecture or conventions.
 3. **Pass the build** — run `make build` (or `npx tsc --noEmit`) and confirm zero TypeScript errors.
 
 No feature is complete until all three are done.
+
+## Recent Changes
+
+### `cliclaw chat` command
+- Interactive TUI for documentation and identity management
+- Conversation history persists per engine in `.cliclaw/tmp/chat-{engine}.json`
+- Memory triggers: "Take note", "Remember...", etc. prompt the agent to update its identity file
+- Agent will not print entire markdown files unless explicitly requested
+- Per-engine identity files supported via `identity` field in engine config
+
+### `maxLoop` configuration
+- Default changed from `500` to `0` (unlimited)
+- Interactive prompt when running `cliclaw cron` without `--max-loop` flag or config value
+- CLI flag `--max-loop=N` takes priority over config.json
+- Loop displays "unlimited" when maxLoop is 0
+- Cycle counter shows just the number (e.g., "Cycle 42") instead of "Cycle 42/0" for unlimited loops

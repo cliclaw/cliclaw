@@ -64,10 +64,17 @@ const commands: Record<string, CommandFn> = {
 
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
+  
+  // Check for --help anywhere in args
+  if (args.includes("--help") || args.includes("-h")) {
+    console.log(HELP);
+    return;
+  }
+
   const command = args[0] ?? "help";
   const commandArgs = args.slice(1);
 
-  if (command === "help" || command === "--help" || command === "-h") {
+  if (command === "help") {
     console.log(HELP);
     return;
   }

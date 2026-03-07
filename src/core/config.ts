@@ -110,7 +110,7 @@ export function resolveAliases(engines: EngineEntry[]): EngineEntry[] {
 }
 
 export const CONFIG_DEFAULTS = {
-  maxLoop: 500,
+  maxLoop: 0,
   maxConsecutiveFailures: 5,
   sleepNormal: 60,
   sleepAfterFailure: 90,

@@ -93,7 +93,7 @@ src/
 | `CLICLAW_ENGINE`         | `kiro`       | Default engine (used when no config file) |
 | `CLICLAW_MODEL`          | (per engine) | Model override                            |
 | `CLICLAW_PROJECT_ROOT`   | `cwd`        | Project root directory                    |
-| `CLICLAW_MAX_LOOP`       | `500`        | Max loop cycles                           |
+| `CLICLAW_MAX_LOOP`       | `0`          | Max loop cycles (0 = unlimited)           |
 | `CLICLAW_SLEEP`          | `60`         | Sleep between cycles (seconds)            |
 | `CLICLAW_SLEEP_FAIL`     | `90`         | Sleep after failure (seconds)             |
 | `CLICLAW_TIMEOUT`        | `3600`      | Agent timeout per cycle (seconds)         |
@@ -136,7 +136,7 @@ All other top-level fields are optional and fall back to defaults:
 
 | Field                      | Default | Description                                                          |
 |----------------------------|---------|----------------------------------------------------------------------|
-| `maxLoop`                  | `500`   | Max cycles before stopping                                           |
+| `maxLoop`                  | `0`     | Max cycles before stopping (0 = unlimited)                           |
 | `sleepNormal`              | `60`    | Seconds to sleep after a successful cycle                            |
 | `idleBeforeStart`          | `0`     | Seconds to pause before the loop starts (0 = no pause)               |
 | `agentTimeout`             | `3600` | Max seconds a single cycle can run before force-kill (24h default)   |
@@ -452,13 +452,28 @@ cliclaw chat                  # Use primary engine
 cliclaw chat --engine=kiro    # Use specific engine by alias or name
 ```
 
+### Help Option
+
+The `--help` (or `-h`) flag can be used flexibly at any position:
+
+```bash
+cliclaw --help                # Global help
+cliclaw cron --help           # Help for cron command
+cliclaw --help cron           # Same as above
+cliclaw chat --help           # Help for chat command
+cliclaw memory search --help  # Help for memory search
+```
+
+When `--help` is detected anywhere in the arguments, CLIClaw displays the global help text and exits without executing the command.
+
 ### Behaviour
 
 - Loads all meta files on every turn (identity, memory, boundaries, you, projects, tools) — same context as cron
 - Conversation history persists to `.cliclaw/tmp/chat-{engine}.json` and auto-resumes on next session
-- Agent decides autonomously when to update `identity.md` — outputs a fenced ` ```identity ``` ` block only when something changed
+- Agent decides autonomously when to update its identity file — outputs a fenced ` ```identity ``` ` block only when something changed
 - Streams agent output live to the terminal with a spinner while waiting for the first token
 - Agent label uses the name from `identity.md` (`**Name**: X`)
+- **Memory triggers**: When you say "Take note", "Remember...", "Don't forget...", or similar phrases, the agent will update its identity file with the new information
 
 ### Slash commands
 
@@ -482,7 +497,23 @@ The chat agent is **documentation-only**:
 
 - May discuss, update, or clarify any `.cliclaw` meta file content
 - Will **not** write code, pseudocode, or implementation suggestions
+- Will **not** print out entire markdown files unless explicitly requested
 - Redirects implementation questions to `cliclaw cron`
+
+### Per-engine identity files
+
+Each engine can have its own identity file by setting the `identity` field in config.json:
+
+```json
+{
+  "engines": [
+    { "engine": "kiro", "model": "claude-sonnet-4.6", "identity": ".cliclaw/meta/identity-dev.md" },
+    { "engine": "claude", "model": "claude-opus-4", "identity": ".cliclaw/meta/identity-reviewer.md" }
+  ]
+}
+```
+
+If no `identity` is specified, the engine uses the global `.cliclaw/meta/identity.md`. When you use `cliclaw chat --engine=X`, it will read and update the identity file configured for that engine.
 
 ### Hot-reload
 

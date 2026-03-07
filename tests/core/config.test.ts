@@ -124,7 +124,7 @@ describe("resolveConfig", () => {
     const config = resolveConfig({ projectRoot: testDir });
     expect(config.engines.length).toBeGreaterThan(0);
     expect(config.engines[0]?.engine).toBe("kiro");
-    expect(config.maxLoop).toBe(500);
+    expect(config.maxLoop).toBe(0);
     expect(config.sleepNormal).toBe(60);
     expect(config.tokenBudget).toBe(8000);
     expect(config.dryRun).toBe(false);
@@ -163,7 +163,7 @@ describe("resolveConfig", () => {
   it("env var with invalid int falls back to default", () => {
     process.env["CLICLAW_MAX_LOOP"] = "notanumber";
     const config = resolveConfig({ projectRoot: testDir });
-    expect(config.maxLoop).toBe(500);
+    expect(config.maxLoop).toBe(0);
   });
 
   it("CLI overrides take precedence over project config and env", () => {

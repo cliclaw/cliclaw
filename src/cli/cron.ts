@@ -4,6 +4,7 @@
  */
 
 import { rmSync, readdirSync, readFileSync, existsSync } from "node:fs";
+import { createInterface } from "node:readline";
 import { resolveConfig, ensureAllDirs, primaryEngine } from "../core/config.js";
 import { initLogger, logInfo, logError, logWarn, logJson } from "../core/logger.js";
 import { initState, readState, writeState } from "../core/state.js";
@@ -99,6 +100,17 @@ export async function cronCommand(args: string[]): Promise<void> {
   const config = resolveConfig({ ...overrides, focusFilter: focus });
   const { paths } = config;
 
+  // Interactive prompt for maxLoop if not set via CLI or config
+  if (config.maxLoop === 0 && !overrides.maxLoop) {
+    const rl = createInterface({ input: process.stdin, output: process.stdout });
+    const answer = await new Promise<string>((resolve) => {
+      rl.question("How many loops? (0 = unlimited, default: 0): ", resolve);
+    });
+    rl.close();
+    const parsed = parseInt(answer.trim(), 10);
+    config.maxLoop = isNaN(parsed) ? 0 : parsed;
+  }
+
   // Validate parallel: require aliases for duplicate engines
   if (config.parallel && config.engines.length > 1) {
     const seen = new Set<string>();
@@ -147,7 +159,8 @@ export async function cronCommand(args: string[]): Promise<void> {
   const primary = primaryEngine(config);
   const engineList = config.engines.map((e) => e.alias ?? e.engine).join(", ");
   logInfo(`=== Starting CLIClaw Autonomous Agent Loop ===`);
-  logInfo(`Primary: ${primary.alias ?? primary.engine} (${primary.model}) | Engines: [${engineList}] | Max: ${config.maxLoop} | Budget: ${config.tokenBudget} tokens`);
+  const maxLoopDisplay = config.maxLoop === 0 ? "unlimited" : config.maxLoop.toString();
+  logInfo(`Primary: ${primary.alias ?? primary.engine} (${primary.model}) | Engines: [${engineList}] | Max: ${maxLoopDisplay} | Budget: ${config.tokenBudget} tokens`);
   if (config.parallel) logInfo(`Parallel mode: ${config.engines.length} engines, max ${config.maxConcurrent} concurrent`);
   if (config.dryRun) logInfo("DRY RUN mode — prompts will be logged but not sent to agents");
   if (focus) logInfo(`Focus: ${focus}`);
@@ -157,10 +170,11 @@ export async function cronCommand(args: string[]): Promise<void> {
     await sleep(config.idleBeforeStart * 1000);
   }
 
-  for (let cycle = 1; cycle <= config.maxLoop; cycle++) {
+  for (let cycle = 1; config.maxLoop === 0 || cycle <= config.maxLoop; cycle++) {
     if (shutdownRequested) break;
 
-    logInfo(`══════ Cycle ${cycle}/${config.maxLoop} ══════`);
+    const cycleDisplay = config.maxLoop === 0 ? cycle.toString() : `${cycle}/${config.maxLoop}`;
+    logInfo(`══════ Cycle ${cycleDisplay} ══════`);
 
     if (cycle % config.snapshotEvery === 1) saveSnapshot(paths.snapshotsDir, paths.stateFile, cycle, config.maxSnapshots);
     runPreCycle(config.hooks, config.projectRoot, cycle, config.hookTimeout);
@@ -312,5 +326,6 @@ export async function cronCommand(args: string[]): Promise<void> {
 
   logInfo("Autonomous loop terminated.");
   releaseLock(paths.lockDir);
-  sendNotification("CLIClaw finished", `Loop completed after ${config.maxLoop} cycles`);
+  const finalMessage = config.maxLoop === 0 ? "Loop stopped" : `Loop completed after ${config.maxLoop} cycles`;
+  sendNotification("CLIClaw finished", finalMessage);
 }

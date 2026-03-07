@@ -35,6 +35,7 @@ That's it. CLIClaw will continuously prompt your chosen AI engine to work on the
 ```bash
 cliclaw cron [focus]     Start the autonomous agent loop
 cliclaw setup            Interactive setup wizard
+cliclaw chat             Interactive chat with the AI (documentation/identity only)
 cliclaw identity         Configure agent identity (name, role, tone, expertise)
 cliclaw memory           View and optimize persistent memory
 cliclaw memory search    Search through memory entries
@@ -57,8 +58,9 @@ cliclaw cron --engine claude       # Use a specific engine
 cliclaw cron --dry-run             # Preview prompts without running agents
 cliclaw cron --parallel            # Run all configured engines simultaneously
 cliclaw cron --focus "fix auth"    # Focus on a specific task
-cliclaw cron --max-loop 10         # Limit cycle count
+cliclaw cron --max-loop 10         # Limit cycle count (0 = unlimited, default)
 cliclaw cron --sleep 30            # Set sleep interval between cycles
+cliclaw chat --engine=kiro         # Use specific engine for chat
 ```
 
 ## Configuration
