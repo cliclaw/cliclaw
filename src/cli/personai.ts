@@ -70,7 +70,28 @@ function buildIdentityContent(answers: Record<string, string>): string {
   return sections.join("\n");
 }
 
-export async function identityCommand(_args: string[]): Promise<void> {
+const IDENTITY_HELP = `
+cliclaw identity — Configure agent identity
+
+Usage:
+  cliclaw identity [options]
+
+Options:
+  --help, -h             Show this help
+
+Interactive:
+  - Configures agent name, role, mission
+  - Sets tone and expertise
+  - Defines coding preferences
+  - Writes to .cliclaw/meta/identity.md
+`;
+
+export async function identityCommand(args: string[]): Promise<void> {
+  if (args.includes("--help") || args.includes("-h")) {
+    console.log(IDENTITY_HELP);
+    return;
+  }
+
   const config = resolveConfig();
   const identityFile = config.paths.identityFile;
   ensureAllDirs(config.paths);

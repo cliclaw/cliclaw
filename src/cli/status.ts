@@ -10,7 +10,29 @@ import { isPidAlive } from "../core/lock.js";
 import { formatCost } from "../core/cost.js";
 import { listSnapshots } from "../core/snapshots.js";
 
-export async function statusCommand(_args: string[]): Promise<void> {
+const STATUS_HELP = `
+cliclaw status — Show current state and statistics
+
+Usage:
+  cliclaw status [options]
+
+Options:
+  --help, -h             Show this help
+
+Displays:
+  - Loop running status
+  - Cycle count and last success
+  - Memory stats
+  - Cost tracking
+  - Available snapshots
+`;
+
+export async function statusCommand(args: string[]): Promise<void> {
+  if (args.includes("--help") || args.includes("-h")) {
+    console.log(STATUS_HELP);
+    return;
+  }
+
   const config = resolveConfig();
   const { paths } = config;
 

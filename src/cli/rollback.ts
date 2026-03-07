@@ -6,7 +6,26 @@ import { resolveConfig } from "../core/config.js";
 import { listSnapshots, rollbackTo } from "../core/snapshots.js";
 import { select, closePrompt } from "../utils/prompt.js";
 
-export async function rollbackCommand(_args: string[]): Promise<void> {
+const ROLLBACK_HELP = `
+cliclaw rollback — Restore state from a snapshot
+
+Usage:
+  cliclaw rollback [options]
+
+Options:
+  --help, -h             Show this help
+
+Interactive:
+  - Lists available snapshots
+  - Select one to restore
+`;
+
+export async function rollbackCommand(args: string[]): Promise<void> {
+  if (args.includes("--help") || args.includes("-h")) {
+    console.log(ROLLBACK_HELP);
+    return;
+  }
+
   const config = resolveConfig();
   const { paths } = config;
 

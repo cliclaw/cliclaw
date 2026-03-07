@@ -7,7 +7,27 @@ import { resolveConfig } from "../core/config.js";
 import { releaseLock } from "../core/lock.js";
 import { confirm, closePrompt } from "../utils/prompt.js";
 
-export async function cleanCommand(_args: string[]): Promise<void> {
+const CLEAN_HELP = `
+cliclaw clean — Remove temp files and logs
+
+Usage:
+  cliclaw clean [options]
+
+Options:
+  --help, -h             Show this help
+
+Interactive:
+  - Removes temp files
+  - Optionally removes logs
+  - Optionally removes state
+`;
+
+export async function cleanCommand(args: string[]): Promise<void> {
+  if (args.includes("--help") || args.includes("-h")) {
+    console.log(CLEAN_HELP);
+    return;
+  }
+
   const config = resolveConfig();
   const { paths } = config;
 

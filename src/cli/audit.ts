@@ -6,6 +6,23 @@ import { existsSync, readFileSync } from "node:fs";
 import { resolveConfig } from "../core/config.js";
 import { formatCost } from "../core/cost.js";
 
+const AUDIT_HELP = `
+cliclaw audit — Audit report from JSONL logs
+
+Usage:
+  cliclaw audit [n] [options]
+
+Arguments:
+  n                      Number of recent events (default: 50)
+
+Options:
+  --help, -h             Show this help
+
+Examples:
+  cliclaw audit          # Last 50 events
+  cliclaw audit 100      # Last 100 events
+`;
+
 interface AuditEntry {
   timestamp: string;
   event?: string;
@@ -19,6 +36,11 @@ interface AuditEntry {
 }
 
 export async function auditCommand(args: string[]): Promise<void> {
+  if (args.includes("--help") || args.includes("-h")) {
+    console.log(AUDIT_HELP);
+    return;
+  }
+
   const config = resolveConfig();
   const jsonlPath = config.paths.logJsonl;
 

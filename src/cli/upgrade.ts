@@ -7,7 +7,25 @@ import { execSync } from "node:child_process";
 const REPO = "cliclaw/cliclaw";
 const INSTALL_URL = `https://raw.githubusercontent.com/${REPO}/main/install.sh`;
 
-export async function upgradeCommand(_args: string[]): Promise<void> {
+const UPGRADE_HELP = `
+cliclaw upgrade — Upgrade to latest version
+
+Usage:
+  cliclaw upgrade [options]
+
+Options:
+  --help, -h             Show this help
+
+Runs:
+  curl -fsSL ${INSTALL_URL} | bash
+`;
+
+export async function upgradeCommand(args: string[]): Promise<void> {
+  if (args.includes("--help") || args.includes("-h")) {
+    console.log(UPGRADE_HELP);
+    return;
+  }
+
   console.log("Upgrading CLIClaw...\n");
   try {
     execSync(`curl -fsSL ${INSTALL_URL} | bash`, { stdio: "inherit" });

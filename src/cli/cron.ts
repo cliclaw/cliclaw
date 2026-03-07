@@ -42,15 +42,49 @@ function findLastPromptFile(tmpDir: string, engineAlias?: string): string | null
   return files[0] ? `${tmpDir}/${files[0]}` : null;
 }
 
-function parseArgs(args: string[]): { focus: string | null; overrides: Partial<ClawConfig>; continueMode: boolean } {
+const CRON_HELP = `
+cliclaw cron — Start the autonomous agent loop
+
+Usage:
+  cliclaw cron [focus] [options]
+
+Arguments:
+  focus                  Optional task focus (e.g., "fix tests")
+
+Options:
+  --engine <name>        Engine to use (kiro, claude, cursor, etc.)
+  --model <name>         Model to use
+  --project-root <path>  Project root directory
+  --max-loop <n>         Max cycles (0 = unlimited)
+  --sleep <seconds>      Sleep between cycles
+  --focus <task>         Task focus
+  --dry-run              Preview prompts without running
+  --parallel             Run all configured engines in parallel
+  --continue             Resume from last prompt
+  --help, -h             Show this help
+
+Examples:
+  cliclaw cron                           # Start with default config
+  cliclaw cron "fix tests"               # Focus on specific task
+  cliclaw cron --engine=claude           # Use specific engine
+  cliclaw cron --dry-run                 # Preview mode
+  cliclaw cron --parallel --max-loop=5   # Parallel mode, 5 cycles
+`;
+
+function parseArgs(args: string[]): { focus: string | null; overrides: Partial<ClawConfig>; continueMode: boolean; showHelp: boolean } {
   const overrides: Partial<ClawConfig> = {};
   let focus: string | null = null;
   let continueMode = false;
+  let showHelp = false;
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
     const next = args[i + 1];
     switch (arg) {
+      case "--help":
+      case "-h":
+        showHelp = true;
+        break;
       case "--engine":
         if (next) {
           overrides.engines = [{ engine: next as EngineEntry["engine"], model: "" }];
@@ -92,11 +126,17 @@ function parseArgs(args: string[]): { focus: string | null; overrides: Partial<C
     }
   }
 
-  return { focus, overrides, continueMode };
+  return { focus, overrides, continueMode, showHelp };
 }
 
 export async function cronCommand(args: string[]): Promise<void> {
-  const { focus, overrides, continueMode } = parseArgs(args);
+  const { focus, overrides, continueMode, showHelp } = parseArgs(args);
+  
+  if (showHelp) {
+    console.log(CRON_HELP);
+    return;
+  }
+  
   const config = resolveConfig({ ...overrides, focusFilter: focus });
   const { paths } = config;
 

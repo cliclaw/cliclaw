@@ -180,8 +180,28 @@ function initBootFile(path: string): void {
 `);
 }
 
+const SETUP_HELP = `
+cliclaw setup — Interactive setup wizard
 
-export async function setupCommand(_args: string[]): Promise<void> {
+Usage:
+  cliclaw setup [options]
+
+Options:
+  --help, -h             Show this help
+
+Interactive:
+  - Detects available AI CLI tools
+  - Configures engines and models
+  - Sets up meta files
+  - Creates initial configuration
+`;
+
+export async function setupCommand(args: string[]): Promise<void> {
+  if (args.includes("--help") || args.includes("-h")) {
+    console.log(SETUP_HELP);
+    return;
+  }
+
   const config = resolveConfig();
   const { paths } = config;
 

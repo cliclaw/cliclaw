@@ -17,6 +17,28 @@ import { dirname } from "node:path";
 
 const TOKEN_THRESHOLD = 800;
 
+const MEMORY_HELP = `
+cliclaw memory — View and manage persistent memory
+
+Usage:
+  cliclaw memory [command] [options]
+
+Commands:
+  (none)                 View memory contents and stats
+  search <term>          Text search through memory
+  search <term> --semantic  Semantic vector search
+  reindex                Rebuild vector index from MEMORY.md
+
+Options:
+  --help, -h             Show this help
+
+Examples:
+  cliclaw memory                        # View memory
+  cliclaw memory search "bug fix"       # Text search
+  cliclaw memory search "testing" --semantic  # Semantic search
+  cliclaw memory reindex                # Rebuild index
+`;
+
 function deduplicateMemory(content: string): string {
   const lines = content.split("\n");
   const seen = new Set<string>();
@@ -56,6 +78,11 @@ function searchMemoryText(content: string, pattern: string): string[] {
 }
 
 export async function memoryCommand(args: string[]): Promise<void> {
+  if (args.includes("--help") || args.includes("-h")) {
+    console.log(MEMORY_HELP);
+    return;
+  }
+
   const config = resolveConfig();
   const memoryFile = config.paths.memoryFile;
   const memoryDir = dirname(memoryFile);

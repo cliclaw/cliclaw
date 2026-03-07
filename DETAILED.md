@@ -454,17 +454,26 @@ cliclaw chat --engine=kiro    # Use specific engine by alias or name
 
 ### Help Option
 
-The `--help` (or `-h`) flag can be used flexibly at any position:
+The `--help` (or `-h`) flag works at the global level and for each command:
 
 ```bash
-cliclaw --help                # Global help
-cliclaw cron --help           # Help for cron command
-cliclaw --help cron           # Same as above
-cliclaw chat --help           # Help for chat command
-cliclaw memory search --help  # Help for memory search
+cliclaw --help                # Global help - shows all commands
+cliclaw -h                    # Same as above
+
+cliclaw cron --help           # Help for cron command only
+cliclaw memory --help         # Help for memory command only
+cliclaw chat --help           # Help for chat command only
+cliclaw status --help         # Help for status command only
+cliclaw audit --help          # Help for audit command only
+cliclaw logs --help           # Help for logs command only
+cliclaw rollback --help       # Help for rollback command only
+cliclaw clean --help          # Help for clean command only
+cliclaw upgrade --help        # Help for upgrade command only
+cliclaw identity --help       # Help for identity command only
+cliclaw setup --help          # Help for setup command only
 ```
 
-When `--help` is detected anywhere in the arguments, CLIClaw displays the global help text and exits without executing the command.
+Each command displays its own specific help text with relevant options, arguments, and examples.
 
 ### Behaviour
 

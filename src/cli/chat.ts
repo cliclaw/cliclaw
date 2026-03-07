@@ -28,6 +28,27 @@ const SLASH_COMMANDS: Record<string, string> = {
   "/exit":    "Exit chat",
 };
 
+const CHAT_HELP = `
+cliclaw chat — Interactive chat for identity and documentation
+
+Usage:
+  cliclaw chat [options]
+
+Options:
+  --engine <name>        Use specific engine by alias or name
+  --help, -h             Show this help
+
+Slash Commands:
+  /clear                 Clear conversation history
+  /history               Show conversation history
+  /help                  Show available commands
+  /exit                  Exit chat
+
+Examples:
+  cliclaw chat                    # Use primary engine
+  cliclaw chat --engine=kiro      # Use specific engine
+`;
+
 // ── Persistence ───────────────────────────────────────────────────────────────
 type Message = { role: "user" | "agent"; text: string; ts: number; summary?: string };
 
@@ -185,6 +206,11 @@ function runOneShotPrompt(entry: EngineEntry, prompt: string, cwd: string, tmpDi
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 export async function chatCommand(args: string[]): Promise<void> {
+  if (args.includes("--help") || args.includes("-h")) {
+    console.log(CHAT_HELP);
+    return;
+  }
+
   const config = resolveConfig();
   ensureAllDirs(config.paths);
 

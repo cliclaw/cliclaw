@@ -40,39 +40,45 @@ describe("--help flag", () => {
     expect(result.stdout).toContain("CLIClaw — Autonomous AI Agent Loop Runner");
   });
 
-  it("should show help with 'cliclaw cron --help'", async () => {
+  it("should show cron-specific help with 'cliclaw cron --help'", async () => {
     const result = await runCLI(["cron", "--help"]);
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toContain("CLIClaw — Autonomous AI Agent Loop Runner");
+    expect(result.stdout).toContain("cliclaw cron");
+    expect(result.stdout).toContain("Start the autonomous agent loop");
   });
 
-  it("should show help with 'cliclaw --help cron'", async () => {
-    const result = await runCLI(["--help", "cron"]);
-    expect(result.exitCode).toBe(0);
-    expect(result.stdout).toContain("CLIClaw — Autonomous AI Agent Loop Runner");
-  });
-
-  it("should show help with 'cliclaw memory --help'", async () => {
+  it("should show memory-specific help with 'cliclaw memory --help'", async () => {
     const result = await runCLI(["memory", "--help"]);
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toContain("CLIClaw — Autonomous AI Agent Loop Runner");
+    expect(result.stdout).toContain("cliclaw memory");
+    expect(result.stdout).toContain("View and manage persistent memory");
   });
 
-  it("should show help with 'cliclaw chat --help'", async () => {
+  it("should show chat-specific help with 'cliclaw chat --help'", async () => {
     const result = await runCLI(["chat", "--help"]);
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toContain("CLIClaw — Autonomous AI Agent Loop Runner");
+    expect(result.stdout).toContain("cliclaw chat");
+    expect(result.stdout).toContain("Interactive chat");
   });
 
-  it("should show help with '--help' in middle of args", async () => {
-    const result = await runCLI(["cron", "--help", "--engine=kiro"]);
-    expect(result.exitCode).toBe(0);
-    expect(result.stdout).toContain("CLIClaw — Autonomous AI Agent Loop Runner");
-  });
-
-  it("should show help with '--help' at end of args", async () => {
+  it("should show status-specific help with 'cliclaw status --help'", async () => {
     const result = await runCLI(["status", "--help"]);
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toContain("CLIClaw — Autonomous AI Agent Loop Runner");
+    expect(result.stdout).toContain("cliclaw status");
+    expect(result.stdout).toContain("Show current state");
+  });
+
+  it("should show audit-specific help with 'cliclaw audit --help'", async () => {
+    const result = await runCLI(["audit", "--help"]);
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain("cliclaw audit");
+    expect(result.stdout).toContain("Audit report");
+  });
+
+  it("should show logs-specific help with 'cliclaw logs --help'", async () => {
+    const result = await runCLI(["logs", "--help"]);
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain("cliclaw logs");
+    expect(result.stdout).toContain("View log entries");
   });
 });

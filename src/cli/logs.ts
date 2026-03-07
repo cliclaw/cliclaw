@@ -6,6 +6,28 @@ import { existsSync, readFileSync, openSync, readSync, closeSync, statSync, watc
 import { resolveConfig } from "../core/config.js";
 import { parseStreamLine } from "../engines/registry.js";
 
+const LOGS_HELP = `
+cliclaw logs — View log entries
+
+Usage:
+  cliclaw logs [n] [options]
+
+Arguments:
+  n                      Number of recent lines (default: 50)
+
+Options:
+  --tail                 Live-tail the log file (Ctrl+C to stop)
+  --json                 Show JSONL log instead of text log
+  --help, -h             Show this help
+
+Examples:
+  cliclaw logs           # Last 50 lines
+  cliclaw logs 100       # Last 100 lines
+  cliclaw logs --tail    # Live tail
+  cliclaw logs --json    # View JSONL log
+`;
+
+
 function printTail(path: string, lines: number): void {
   const content = readFileSync(path, "utf-8");
   const all = content.split("\n");
@@ -65,6 +87,11 @@ function liveTailCycle(path: string): void {
 }
 
 export async function logsCommand(args: string[]): Promise<void> {
+  if (args.includes("--help") || args.includes("-h")) {
+    console.log(LOGS_HELP);
+    return;
+  }
+
   const config = resolveConfig();
   const useJsonl = args.includes("--json");
   const isTail = args.includes("--tail") || args.includes("-f");

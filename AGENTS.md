@@ -86,6 +86,32 @@ No feature is complete until all three are done.
 
 ## Recent Changes
 
+### Command-specific `--help` option
+- Each CLI command now has its own help text with relevant options, arguments, and examples
+- `cliclaw --help` shows global help with all commands
+- `cliclaw <command> --help` shows command-specific help (e.g., `cliclaw cron --help`)
+- **Pattern for new commands**: Add a `COMMAND_HELP` constant with usage/options/examples, check for `--help`/`-h` at the start of the command function, and display help before any other logic
+- Example:
+  ```typescript
+  const MY_HELP = `
+  cliclaw mycommand — Description
+  
+  Usage:
+    cliclaw mycommand [options]
+  
+  Options:
+    --help, -h             Show this help
+  `;
+  
+  export async function myCommand(args: string[]): Promise<void> {
+    if (args.includes("--help") || args.includes("-h")) {
+      console.log(MY_HELP);
+      return;
+    }
+    // ... rest of command logic
+  }
+  ```
+
 ### `cliclaw chat` command
 - Interactive TUI for documentation and identity management
 - Conversation history persists per engine in `.cliclaw/tmp/chat-{engine}.json`
