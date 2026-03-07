@@ -79,7 +79,7 @@ Key patterns:
 Every new feature or change **must**:
 
 1. **Have tests** — write test cases in `tests/` covering the new behaviour. Run `npm test` and confirm all pass before considering the work done.
-2. **Be documented** — update `DETAILED.md` with a section describing the feature: what it does, how to use it, any config options, and relevant edge cases. Update `README.md` if it affects user-facing commands. Update `AGENTS.md` if it changes architecture or conventions.
+2. **Be documented** — update relevant files in `docs/` with sections describing the feature: what it does, how to use it, any config options, and relevant edge cases. Update `README.md` if it affects user-facing commands. Update `AGENTS.md` if it changes architecture or conventions.
 3. **Pass the build** — run `make build` (or `npx tsc --noEmit`) and confirm zero TypeScript errors.
 
 No feature is complete until all three are done.

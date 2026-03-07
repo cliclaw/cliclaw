@@ -10,7 +10,7 @@ Run AI coding agents (Kiro, Claude, Cursor, Codex, Aider, Gemini, Copilot) in a 
 
 ## Why CLIClaw?
 
-You already pay for Cursor, Kiro, Claude — CLIClaw just puts them in a loop and points them at your codebase. No extra API keys, no extra billing. See [DETAILED.md](DETAILED.md#why-cliclaw) for the full story and comparison with OpenClaw.
+You already pay for Cursor, Kiro, Claude — CLIClaw just puts them in a loop and points them at your codebase. No extra API keys, no extra billing. See [docs/why-cliclaw.md](docs/why-cliclaw.md) for the full story and comparison with OpenClaw.
 
 ## Install
 
@@ -97,7 +97,7 @@ The AI can embed special signals in its response to control the loop:
 | `[SKIP CYCLE]`   | Skip hooks and sleep — nothing to do this cycle          |
 | `[STALL RESET]`  | Reset the stall/backoff counter — real progress was made |
 
-Teach your AI when to use them via `.cliclaw/meta/identity.md`. See [DETAILED.md](DETAILED.md#agent-signals) for full documentation.
+Teach your AI when to use them via `.cliclaw/meta/identity.md`. See [docs/autonomous-loop.md](docs/autonomous-loop.md#agent-signals) for full documentation.
 
 ## Supported Engines
 
@@ -188,7 +188,7 @@ make build            # Compile TypeScript
 npm test              # Run tests
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines and [DETAILED.md](DETAILED.md) for full technical documentation.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines and [docs/](docs/) for full technical documentation.
 
 ## License
 

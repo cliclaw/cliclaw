@@ -20,7 +20,7 @@ package.json
 tsconfig.json
 vitest.config.ts
 README.md
-DETAILED.md
+docs/
 AGENTS.md
 project.md
 ```
