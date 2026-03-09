@@ -24,8 +24,8 @@ afterEach(() => {
 describe("initLedger", () => {
   it("creates ledger with tasks for each engine", () => {
     const ledger = initLedger(testDir, 1, [
-      { engine: "kiro1", focus: "frontend" },
-      { engine: "kiro2", focus: "backend" },
+      { agent: "kiro1", focus: "frontend" },
+      { agent: "kiro2", focus: "backend" },
     ]);
     expect(ledger.cycle).toBe(1);
     expect(ledger.tasks).toHaveLength(2);
@@ -35,12 +35,12 @@ describe("initLedger", () => {
   });
 
   it("defaults focus to 'general'", () => {
-    const ledger = initLedger(testDir, 1, [{ engine: "kiro", focus: "" }]);
+    const ledger = initLedger(testDir, 1, [{ agent: "kiro", focus: "" }]);
     expect(ledger.tasks[0]!.focus).toBe("general");
   });
 
   it("writes ledger to disk", () => {
-    initLedger(testDir, 1, [{ engine: "kiro", focus: "" }]);
+    initLedger(testDir, 1, [{ agent: "kiro", focus: "" }]);
     expect(existsSync(join(testDir, "parallel-ledger.json"))).toBe(true);
   });
 });
@@ -48,8 +48,8 @@ describe("initLedger", () => {
 describe("claimTask", () => {
   it("claims a pending task", () => {
     initLedger(testDir, 1, [
-      { engine: "kiro1", focus: "frontend" },
-      { engine: "kiro2", focus: "backend" },
+      { agent: "kiro1", focus: "frontend" },
+      { agent: "kiro2", focus: "backend" },
     ]);
     const task = claimTask(testDir, "kiro1");
     expect(task).not.toBeNull();
@@ -58,7 +58,7 @@ describe("claimTask", () => {
   });
 
   it("returns null when no tasks available", () => {
-    initLedger(testDir, 1, [{ engine: "kiro", focus: "" }]);
+    initLedger(testDir, 1, [{ agent: "kiro", focus: "" }]);
     claimTask(testDir, "kiro"); // claim the only task
     // Now try to claim again — the task is already claimed with focus "general"
     // The claimTask logic checks for pending OR (non-general focus AND unclaimed)
@@ -69,7 +69,7 @@ describe("claimTask", () => {
 
 describe("completeTask", () => {
   it("marks task as done", () => {
-    const ledger = initLedger(testDir, 1, [{ engine: "kiro", focus: "" }]);
+    const ledger = initLedger(testDir, 1, [{ agent: "kiro", focus: "" }]);
     const taskId = ledger.tasks[0]!.id;
     completeTask(testDir, taskId, "done", "completed successfully");
 
@@ -79,7 +79,7 @@ describe("completeTask", () => {
   });
 
   it("marks task as failed", () => {
-    const ledger = initLedger(testDir, 1, [{ engine: "kiro", focus: "" }]);
+    const ledger = initLedger(testDir, 1, [{ agent: "kiro", focus: "" }]);
     const taskId = ledger.tasks[0]!.id;
     completeTask(testDir, taskId, "failed");
 
@@ -88,7 +88,7 @@ describe("completeTask", () => {
   });
 
   it("does nothing for unknown task id", () => {
-    initLedger(testDir, 1, [{ engine: "kiro", focus: "" }]);
+    initLedger(testDir, 1, [{ agent: "kiro", focus: "" }]);
     completeTask(testDir, "nonexistent_id", "done"); // should not throw
   });
 });
@@ -100,8 +100,8 @@ describe("getLedgerContext", () => {
 
   it("returns markdown summary of tasks", () => {
     initLedger(testDir, 1, [
-      { engine: "kiro1", focus: "frontend" },
-      { engine: "kiro2", focus: "backend" },
+      { agent: "kiro1", focus: "frontend" },
+      { agent: "kiro2", focus: "backend" },
     ]);
     claimTask(testDir, "kiro1");
 

@@ -75,7 +75,6 @@ export function killAgentProcesses(): void {
     "kiro-cli\\s+chat",
     "claude\\s+",
     "codex\\s+",
-    "aider\\s+",
   ];
   for (const pat of patterns) {
     try {

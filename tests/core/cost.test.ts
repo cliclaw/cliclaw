@@ -4,7 +4,7 @@ import {
   estimateCost,
   formatCost,
   estimateTokens,
-  getEnginePricing,
+  getAgentPricing,
 } from "../src/core/cost.js";
 
 describe("getModelPricing", () => {
@@ -82,9 +82,9 @@ describe("estimateTokens", () => {
   });
 });
 
-describe("getEnginePricing", () => {
+describe("getAgentPricing", () => {
   it("delegates to getModelPricing", () => {
-    const pricing = getEnginePricing("kiro", "claude-opus-4.6");
+    const pricing = getAgentPricing("kiro", "claude-opus-4.6");
     expect(pricing.input).toBe(15);
     expect(pricing.output).toBe(75);
   });

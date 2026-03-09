@@ -15,13 +15,13 @@ src/
 │   ├── lock.ts           Singleton lock management
 │   ├── memory.ts         Memory read/write/trim
 │   ├── vectors.ts        TF-IDF vector memory (semantic search)
-│   ├── ledger.ts         Parallel task ledger (engine coordination)
+│   ├── ledger.ts         Parallel task ledger (agent coordination)
 │   ├── cost.ts           Per-model pricing + cost estimation
 │   ├── secrets.ts        Secret scanning + redaction
 │   ├── snapshots.ts      State snapshot + rollback
 │   └── hooks.ts          Plugin lifecycle hooks + agent signals
-├── engines/
-│   ├── registry.ts       Engine definitions (7 engines)
+├── agents/
+│   ├── registry.ts       Agent definitions (7 agents)
 │   └── runner.ts         Process spawning + parallel execution
 ├── prompts/
 │   └── builder.ts        Token-aware prompt composition + diff
@@ -48,11 +48,11 @@ src/
 
 **Lazy initialization** — readline only created when interactive input is needed
 
-**Engine registry** — Each engine defines `command`, `buildArgs`, `stdinPrompt`, `model`, `lenientExit`
+**Agent registry** — Each agent defines `command`, `buildArgs`, `stdinPrompt`, `model`, `lenientExit`
 
 **Prompt builder** — Strips boilerplate, demotes headers, skips template-only sections, scans for secrets
 
-**Parallel execution** — File-based task ledger (`src/core/ledger.ts`) for engine coordination
+**Parallel execution** — File-based task ledger (`src/core/ledger.ts`) for agent coordination
 
 **Semantic memory** — TF-IDF vectors (`src/core/vectors.ts`), no external APIs
 

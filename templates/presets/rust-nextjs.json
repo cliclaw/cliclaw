@@ -1,0 +1,19 @@
+{
+  "name": "Rust + Next.js",
+  "description": "High-performance Rust backend with Next.js frontend",
+  "agents": [
+    {
+      "agent": "claude",
+      "model": "claude-sonnet-4-20250514",
+      "alias": "backend",
+      "identity": "rust-dev.md"
+    },
+    {
+      "agent": "kiro",
+      "model": "claude-sonnet-4.5",
+      "alias": "frontend",
+      "identity": "frontend-nextjs.md",
+      "skills": ["nextjs", "tailwindcss"]
+    }
+  ]
+}

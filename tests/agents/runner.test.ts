@@ -35,9 +35,9 @@ vi.mock("../src/core/ledger.js", () => ({
 
 import { spawn } from "node:child_process";
 import { logWarn } from "../src/core/logger.js";
-import { runCycle, runParallelCycles, getCurrentAgentPids, stopAllAgents } from "../src/engines/runner.js";
+import { runCycle, runParallelCycles, getCurrentAgentPids, stopAllAgents } from "../src/agents/runner.js";
 import { buildPaths, ensureAllDirs } from "../src/core/config.js";
-import type { ClawConfig, EngineEntry } from "../src/core/types.js";
+import type { ClawConfig, AgentEntry } from "../src/core/types.js";
 
 let testDir: string;
 
@@ -46,7 +46,7 @@ function makeConfig(overrides: Partial<ClawConfig> = {}): ClawConfig {
   ensureAllDirs(paths);
   return {
     projectRoot: testDir,
-    engines: [{ engine: "kiro", model: "test-model", alias: "kiro" }],
+    engines: [{ agent: "kiro", model: "test-model", alias: "kiro" }],
     maxLoop: 10,
     maxConsecutiveFailures: 5,
     sleepNormal: 1,
@@ -344,9 +344,9 @@ describe("runParallelCycles", () => {
       return child;
     }) as any);
 
-    const entries: EngineEntry[] = [
-      { engine: "kiro", model: "m1", alias: "kiro1" },
-      { engine: "claude", model: "m2", alias: "claude1" },
+    const entries: AgentEntry[] = [
+      { agent: "kiro", model: "m1", alias: "kiro1" },
+      { agent: "claude", model: "m2", alias: "claude1" },
     ];
 
     const results = await runParallelCycles(config, "test", 1, entries);
@@ -363,9 +363,9 @@ describe("runParallelCycles", () => {
       return child;
     }) as any);
 
-    const entries: EngineEntry[] = [
-      { engine: "kiro", model: "m1", alias: "kiro1" },
-      { engine: "kiro", model: "m2", alias: "kiro2" },
+    const entries: AgentEntry[] = [
+      { agent: "kiro", model: "m1", alias: "kiro1" },
+      { agent: "kiro", model: "m2", alias: "kiro2" },
     ];
 
     const results = await runParallelCycles(config, "test", 1, entries);
@@ -382,8 +382,8 @@ describe("runParallelCycles", () => {
       return child;
     }) as any);
 
-    const entries: EngineEntry[] = [
-      { engine: "kiro", model: "m1", alias: "kiro1", focus: "frontend" },
+    const entries: AgentEntry[] = [
+      { agent: "kiro", model: "m1", alias: "kiro1", focus: "frontend" },
     ];
 
     const results = await runParallelCycles(config, "base prompt", 1, entries);
@@ -394,7 +394,7 @@ describe("runParallelCycles", () => {
     expect(written).toContain("Focus on: frontend");
   });
 
-  it("uses buildEnginePrompt when provided", async () => {
+  it("uses buildAgentPrompt when provided", async () => {
     const config = makeConfig({ maxConcurrent: 2 });
     vi.mocked(spawn).mockImplementation((() => {
       const child = mockChild();
@@ -402,11 +402,11 @@ describe("runParallelCycles", () => {
       return child;
     }) as any);
 
-    const entries: EngineEntry[] = [{ engine: "kiro", model: "m1", alias: "kiro1" }];
-    const buildEnginePrompt = vi.fn(() => "custom engine prompt");
+    const entries: AgentEntry[] = [{ agent: "kiro", model: "m1", alias: "kiro1" }];
+    const buildAgentPrompt = vi.fn(() => "custom engine prompt");
 
-    await runParallelCycles(config, "base", 1, entries, buildEnginePrompt);
-    expect(buildEnginePrompt).toHaveBeenCalledWith(entries[0]);
+    await runParallelCycles(config, "base", 1, entries, buildAgentPrompt);
+    expect(buildAgentPrompt).toHaveBeenCalledWith(entries[0]);
   });
 
   it("marks task as failed when cycle fails", async () => {
@@ -418,7 +418,7 @@ describe("runParallelCycles", () => {
       return child;
     }) as any);
 
-    const entries: EngineEntry[] = [{ engine: "codex", model: "m1", alias: "codex1" }];
+    const entries: AgentEntry[] = [{ agent: "codex", model: "m1", alias: "codex1" }];
     await runParallelCycles(config, "test", 1, entries);
     expect(completeTask).toHaveBeenCalledWith(expect.any(String), "t1", "failed");
   });
@@ -432,7 +432,7 @@ describe("runParallelCycles", () => {
       return child;
     }) as any);
 
-    const entries: EngineEntry[] = [{ engine: "kiro", model: "m1", alias: "kiro1" }];
+    const entries: AgentEntry[] = [{ agent: "kiro", model: "m1", alias: "kiro1" }];
     await runParallelCycles(config, "test", 1, entries);
     expect(completeTask).toHaveBeenCalledWith(expect.any(String), "t1", "done");
   });

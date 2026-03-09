@@ -5,12 +5,14 @@
 import { spawn } from "node:child_process";
 import { writeFileSync, mkdirSync, createReadStream, appendFileSync } from "node:fs";
 import { dirname } from "node:path";
-import { getEngine } from "./registry.js";
+import { getAgent } from "./registry.js";
 import { killPidTree } from "../core/lock.js";
 import { logInfo, logWarn } from "../core/logger.js";
 import { estimateCost, estimateTokens } from "../core/cost.js";
 import { initLedger, claimTask, completeTask, getLedgerContext } from "../core/ledger.js";
-import type { ClawConfig, CycleResult, EngineEntry } from "../core/types.js";
+import { processTrackerCommands } from "../prompts/tracker-parser.js";
+import { logTokenUsage } from "../core/tracker.js";
+import type { ClawConfig, CycleResult, AgentEntry } from "../core/types.js";
 
 let currentAgentPids: number[] = [];
 
@@ -37,10 +39,10 @@ function spawnAgent(
   engineOverride?: string,
   modelOverride?: string,
 ): Promise<CycleResult> {
-  const primary = config.engines[0]!;
-  const engineName = (engineOverride ?? primary.engine) as EngineEntry["engine"];
+  const primary = config.agents[0]!;
+  const engineName = (engineOverride ?? primary.agent) as AgentEntry["agent"];
   const model = modelOverride ?? primary.model;
-  const engine = getEngine(engineName);
+  const engine = getAgent(engineName);
   const resume = cycle > 1 && cycle % config.freshSessionEvery !== 0 && engine.supportsResume;
 
   const inputFile = `${config.paths.tmpDir}/agent-input-${cycle}-${engineName}.txt`;
@@ -147,6 +149,14 @@ function spawnAgent(
 
       const inputTokens = estimateTokens(promptText);
       const outputTokens = estimateTokens(parsedOutput);
+      const cost = estimateCost(model, inputTokens, outputTokens);
+
+      // Process tracker commands from agent output
+      const agentAlias = engineOverride || engineName;
+      processTrackerCommands(config.projectRoot, agentAlias, parsedOutput);
+      
+      // Log token usage to tracker
+      logTokenUsage(config.projectRoot, agentAlias, cycle, inputTokens + outputTokens, cost);
 
       resolve({
         exitCode,
@@ -193,21 +203,21 @@ export async function runParallelCycles(
   config: ClawConfig,
   promptText: string,
   cycle: number,
-  entries: EngineEntry[],
-  buildEnginePrompt?: (entry: EngineEntry) => string,
+  entries: AgentEntry[],
+  buildEnginePrompt?: (entry: AgentEntry) => string,
 ): Promise<CycleResult[]> {
   const maxConcurrent = config.maxConcurrent;
   const results: CycleResult[] = [];
 
   initLedger(config.paths.tmpDir, cycle, entries.map((e) => ({
-    engine: e.alias ?? e.engine,
+    agent: e.alias ?? e.agent,
     focus: e.focus ?? "",
   })));
 
   for (let i = 0; i < entries.length; i += maxConcurrent) {
     const batch = entries.slice(i, i + maxConcurrent);
     const batchPromises = batch.map((entry) => {
-      const alias = entry.alias ?? entry.engine;
+      const alias = entry.alias ?? entry.agent;
       const task = claimTask(config.paths.tmpDir, alias);
       const ledgerContext = getLedgerContext(config.paths.tmpDir);
       const basePrompt = buildEnginePrompt ? buildEnginePrompt(entry) : promptText;
@@ -215,7 +225,7 @@ export async function runParallelCycles(
         ? `${basePrompt}\n\n## Focus\nFocus on: ${entry.focus}\nDo NOT modify files outside your focus area.\n${ledgerContext}`
         : `${basePrompt}\n${ledgerContext}`;
 
-      return spawnAgent(config, focusedPrompt, cycle, entry.engine, entry.model).then((result) => {
+      return spawnAgent(config, focusedPrompt, cycle, entry.agent, entry.model).then((result) => {
         if (task) {
           completeTask(config.paths.tmpDir, task.id, result.exitCode === 0 ? "done" : "failed");
         }

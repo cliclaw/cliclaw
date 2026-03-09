@@ -1,0 +1,12 @@
+{
+  "name": ".NET + Blazor",
+  "description": "C# .NET backend with Blazor WebAssembly",
+  "agents": [
+    {
+      "agent": "copilot",
+      "model": "gpt-4o",
+      "alias": "fullstack",
+      "identity": "dotnet-dev.md"
+    }
+  ]
+}

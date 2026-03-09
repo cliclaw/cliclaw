@@ -1,0 +1,40 @@
+{
+  "agents": [
+    {
+      "agent": "kiro",
+      "model": "claude-opus-4.6",
+      "alias": "ceo",
+      "identity": ".cliclaw/meta/identity-ceo.md"
+    },
+    {
+      "agent": "claude",
+      "model": "claude-sonnet-4-20250514",
+      "alias": "cto",
+      "identity": ".cliclaw/meta/identity-cto.md"
+    },
+    {
+      "agent": "cursor",
+      "model": "gpt-5.2-high",
+      "alias": "dev",
+      "focus": "implementation",
+      "identity": ".cliclaw/meta/identity-dev.md"
+    },
+    {
+      "agent": "cursor",
+      "model": "gpt-5.2-high",
+      "alias": "qa",
+      "identity": ".cliclaw/meta/identity-qa.md",
+      "manual": true
+    }
+  ],
+  "maxLoop": 0,
+  "sleepNormal": 60,
+  "tokenBudget": 8000,
+  "maxConcurrent": 3,
+  "hooks": {
+    "preCycle": [],
+    "postCycle": ["npm run lint"],
+    "onSuccess": ["git add -A && git commit -m 'cliclaw: auto-commit'"],
+    "onFailure": []
+  }
+}

@@ -45,7 +45,7 @@ function writeLedger(tmpDir: string, ledger: TaskLedger): void {
 export function initLedger(
   tmpDir: string,
   cycle: number,
-  engines: Array<{ engine: string; focus: string }>,
+  engines: Array<{ agent: string; focus: string }>,
 ): TaskLedger {
   const tasks: LedgerTask[] = engines.map((e, i) => ({
     id: `task_${cycle}_${i}`,

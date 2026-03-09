@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-CLIClaw is an autonomous AI agent loop runner — multi-engine, token-aware, cost-effective. It runs AI coding agents (Kiro, Claude, Cursor, Codex, Aider, Gemini, Copilot) in a continuous loop on any project, building context-aware prompts, tracking costs, rotating engines on failure, and keeping codebases moving forward autonomously.
+CLIClaw is an autonomous AI agent loop runner — multi-agent, token-aware, cost-effective. It runs AI coding agents (Kiro, Claude, Cursor, Codex, Gemini, Copilot) in a continuous loop on any project, building context-aware prompts, tracking costs, rotating agents on failure, and keeping codebases moving forward autonomously.
 
 Written in strict TypeScript. No runtime dependencies — Node.js built-ins only.
 
@@ -22,31 +22,34 @@ Written in strict TypeScript. No runtime dependencies — Node.js built-ins only
 src/
 ├── index.ts              # Entry point + command router
 ├── core/                 # Config, state, memory, vectors, ledger, logging, cost, secrets, hooks, snapshots
-├── engines/              # Engine registry (7 engines) + process runner
+├── agents/               # Agent registry (7 agents) + process runner
 ├── prompts/              # Token-aware prompt builder with diff and cleaning
 ├── cli/                  # CLI commands (cron, setup, personai, memory, audit, etc.)
 └── utils/                # Terminal helpers, notifications
-tests/                    # Vitest test suite (27 files, 247 tests, ~93% coverage)
+tests/                    # Vitest test suite (28 files, 302 tests, ~88% passing)
+templates/identities/     # Pre-built identity templates (CEO, CTO, Staff Engineer, etc.)
 ```
 
 Key patterns:
 
 - Config cascade: CLI args → project `.cliclaw/config.json` → env vars → defaults
-- **`engines` array is the primary config unit** — first entry is primary, all are used for rotation and parallel execution
-- Each engine entry has `engine`, `model`, optional `alias` (required for duplicates), optional `focus`
+- **`agents` array is the primary config unit** — non-manual agents run in parallel by default
+- Each agent entry has `agent`, `model`, optional `alias` (required for duplicates), optional `focus`, optional `manual`
 - Lazy initialization (e.g. readline only created when interactive input is needed)
-- Engine registry pattern: each engine defines `command`, `buildArgs`, `stdinPrompt`, `model`, `lenientExit`
+- Agent registry pattern: each agent defines `command`, `buildArgs`, `stdinPrompt`, `model`, `lenientExit`
 - Prompt builder strips boilerplate, demotes headers, skips template-only sections, scans for secrets
-- Parallel execution uses a file-based task ledger (`src/core/ledger.ts`) for engine coordination
+- Parallel execution uses a file-based task ledger (`src/core/ledger.ts`) for agent coordination
 - Semantic memory search via TF-IDF vectors (`src/core/vectors.ts`), no external APIs
+- Identity templates in `templates/identities/` for common roles (CEO, CTO, QA, etc.)
 
 ### Config Format
 
 ```json
 {
-  "engines": [
-    { "engine": "kiro", "model": "claude-opus-4.6" },
-    { "engine": "claude", "model": "claude-sonnet-4-20250514" }
+  "agents": [
+    { "agent": "kiro", "model": "claude-opus-4.6", "alias": "ceo", "identity": ".cliclaw/meta/identity-ceo.md" },
+    { "agent": "claude", "model": "claude-sonnet-4-20250514", "alias": "cto" },
+    { "agent": "cursor", "alias": "qa", "manual": true }
   ],
   "tokenBudget": 8000,
   "maxConcurrent": 2,
@@ -72,7 +75,7 @@ Key patterns:
 - Create files over 1000 lines
 - Modify meta file templates without updating the prompt builder's cleaning logic
 - Break the config cascade order (CLI > project config > env > defaults)
-- Use top-level `engine`/`model` in config — always use the `engines` array
+- Use top-level `agent`/`model` in config — always use the `agents` array
 
 ## Feature Development Rules
 
@@ -112,12 +115,42 @@ No feature is complete until all three are done.
   }
   ```
 
+### Agent-based parallel execution
+- All non-manual agents run in parallel by default
+- Use `manual: true` flag to exclude agents from auto-run
+- `--agent` flag to run specific agent (including manual ones)
+- Example config:
+  ```json
+  {
+    "agents": [
+      { "agent": "kiro", "alias": "ceo", "identity": ".cliclaw/meta/identity-ceo.md" },
+      { "agent": "claude", "alias": "cto", "identity": ".cliclaw/meta/identity-cto.md" },
+      { "agent": "cursor", "alias": "qa", "manual": true }
+    ]
+  }
+  ```
+- Running `cliclaw cron` executes CEO and CTO agents in parallel
+- Running `cliclaw cron --agent=qa` executes only the QA agent
+
+### Identity templates
+- 7 pre-built templates in `templates/identities/`:
+  - `ceo.md` - CEO/Founder (strategic, product-focused)
+  - `cto.md` - CTO (technical architecture, quality)
+  - `staff-engineer.md` - Staff Engineer (full-stack implementation)
+  - `typescript-dev.md` - TypeScript Developer (type-safe Node.js)
+  - `frontend-svelte.md` - Frontend Developer (Svelte 5 + Vite)
+  - `mobile-flutter.md` - Mobile Developer (Flutter)
+  - `qa-playwright.md` - QA Engineer (Playwright + Cucumber)
+  - `go-dev.md` - Go Developer (backend services)
+- `cliclaw setup` offers template selection during initialization
+- Each agent can have its own identity file via `identity` field
+
 ### `cliclaw chat` command
 - Interactive TUI for documentation and identity management
-- Conversation history persists per engine in `.cliclaw/tmp/chat-{engine}.json`
+- Conversation history persists per agent in `.cliclaw/tmp/chat-{agent}.json`
 - Memory triggers: "Take note", "Remember...", etc. prompt the agent to update its identity file
 - Agent will not print entire markdown files unless explicitly requested
-- Per-engine identity files supported via `identity` field in engine config
+- Per-agent identity files supported via `identity` field in agent config
 
 ### `maxLoop` configuration
 - Default changed from `500` to `0` (unlimited)

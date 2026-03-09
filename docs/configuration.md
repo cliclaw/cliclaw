@@ -4,7 +4,7 @@ CLIClaw uses a cascading configuration system with clear precedence.
 
 ## Config Resolution Order
 
-1. CLI arguments (`--engine`, `--model`, `--dry-run`, etc.)
+1. CLI arguments (`--agent`, `--model`, `--dry-run`, etc.)
 2. Project config (`.cliclaw/config.json`)
 3. Environment variables (`CLICLAW_*`)
 4. Built-in defaults
@@ -13,8 +13,8 @@ CLIClaw uses a cascading configuration system with clear precedence.
 
 | Variable                 | Default      | Description                               |
 |--------------------------|--------------|-------------------------------------------|
-| `CLICLAW_ENGINE`         | `kiro`       | Default engine (used when no config file) |
-| `CLICLAW_MODEL`          | (per engine) | Model override                            |
+| `CLICLAW_AGENT`         | `kiro`       | Default agent (used when no config file) |
+| `CLICLAW_MODEL`          | (per agent) | Model override                            |
 | `CLICLAW_PROJECT_ROOT`   | `cwd`        | Project root directory                    |
 | `CLICLAW_MAX_LOOP`       | `0`          | Max loop cycles (0 = unlimited)           |
 | `CLICLAW_SLEEP`          | `60`         | Sleep between cycles (seconds)            |
@@ -22,19 +22,19 @@ CLIClaw uses a cascading configuration system with clear precedence.
 | `CLICLAW_TIMEOUT`        | `3600`       | Agent timeout per cycle (seconds)         |
 | `CLICLAW_FRESH_EVERY`    | `3`          | Start fresh session every N cycles        |
 | `CLICLAW_TOKEN_BUDGET`   | `8000`       | Max tokens per prompt (0 = unlimited)     |
-| `CLICLAW_MAX_CONCURRENT` | `2`          | Max parallel engines                      |
+| `CLICLAW_MAX_CONCURRENT` | `2`          | Max parallel agents                      |
 | `CLICLAW_DRY_RUN`        | `false`      | Preview prompts without running agents    |
 
 ## Project Config (`.cliclaw/config.json`)
 
-The `engines` array is the primary config unit. The first entry is the primary engine; all entries are available for parallel execution and rotation on failure.
+The `agents` array is the primary config unit. The first entry is the primary agent; all entries are available for parallel execution and rotation on failure.
 
 ```json
 {
-  "engines": [
-    { "engine": "claude", "model": "claude-sonnet-4-20250514" },
-    { "engine": "kiro", "model": "claude-sonnet-4.6", "alias": "kiro-frontend", "focus": "frontend" },
-    { "engine": "kiro", "model": "claude-sonnet-4.6", "alias": "kiro-backend", "focus": "backend" }
+  "agents": [
+    { "agent": "claude", "model": "claude-sonnet-4-20250514" },
+    { "agent": "kiro", "model": "claude-sonnet-4.6", "alias": "kiro-frontend", "focus": "frontend" },
+    { "agent": "kiro", "model": "claude-sonnet-4.6", "alias": "kiro-backend", "focus": "backend" }
   ],
   "tokenBudget": 8000,
   "maxConcurrent": 2,
@@ -47,11 +47,11 @@ The `engines` array is the primary config unit. The first entry is the primary e
 }
 ```
 
-### Engine Entry Fields
+### Agent Entry Fields
 
-- `engine` — Engine name (`kiro`, `claude`, `cursor`, `codex`, `aider`, `gemini`, `copilot`)
-- `model` — Model to use (defaults to engine's default if omitted)
-- `alias` — Unique name for this instance (required when using duplicate engines)
+- `agent` — Agent name (`kiro`, `claude`, `cursor`, `codex`, `gemini`, `copilot`)
+- `model` — Model to use (defaults to agent's default if omitted)
+- `alias` — Unique name for this instance (required when using duplicate agents)
 - `focus` — Focus area for parallel execution (e.g. `"frontend"`, `"backend"`)
 - `identity` — Path to identity file relative to `projectRoot` (e.g. `".cliclaw/meta/identity-reviewer.md"`)
 
@@ -65,9 +65,9 @@ The `engines` array is the primary config unit. The first entry is the primary e
 | `agentTimeout`             | `3600`  | Max seconds a single cycle can run before force-kill                 |
 | `outputStallTimeout`       | `600`   | Kill agent if no new output bytes arrive within N seconds (0 = off)  |
 | `tokenBudget`              | `8000`  | Max tokens per prompt (0 = unlimited)                                |
-| `maxConcurrent`            | `2`     | Max parallel engines when using `--parallel`                         |
+| `maxConcurrent`            | `2`     | Max parallel agents when using `all non-manual agents run in parallel by default`                         |
 | `snapshotEvery`            | `4`     | Save a state snapshot every N cycles                                 |
-| `engineRotateAfter`        | `3`     | Consecutive failures before rotating to next engine                  |
+| `agentRotateAfter`        | `3`     | Consecutive failures before rotating to next agent                  |
 | `stallMax`                 | `10`    | Stall cycles before emitting a stall warning                         |
 | `stallBackoffMultiplier`   | `1.5`   | Sleep multiplier per stall cycle (`sleep *= multiplier^stallCycles`) |
 | `stallBackoffCap`          | `10`    | Maximum backoff multiplier (caps exponential growth)                 |

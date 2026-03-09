@@ -1,0 +1,12 @@
+{
+  "name": "Ruby on Rails + Hotwire",
+  "description": "Rails with Hotwire (Turbo + Stimulus)",
+  "agents": [
+    {
+      "agent": "kiro",
+      "model": "claude-sonnet-4.5",
+      "alias": "fullstack",
+      "identity": "rails-dev.md"
+    }
+  ]
+}

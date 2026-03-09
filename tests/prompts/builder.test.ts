@@ -35,7 +35,7 @@ function makeConfig(overrides: Partial<ClawConfig> = {}): ClawConfig {
   const paths = buildPaths(testDir);
   return {
     projectRoot: testDir,
-    engines: [{ engine: "kiro", model: "test-model", alias: "kiro" }],
+    engines: [{ agent: "kiro", model: "test-model", alias: "kiro" }],
     maxLoop: 10,
     maxConsecutiveFailures: 5,
     sleepNormal: 1,
@@ -166,15 +166,15 @@ describe("buildPrompt", () => {
     expect(promptCycle2).not.toContain("Boot Instructions");
   });
 
-  it("uses per-engine identity file when specified", () => {
+  it("uses per-agent identity file when specified", () => {
     const { join } = require("node:path");
     const { writeFileSync: wf } = require("node:fs");
     const customIdentityPath = join(testDir, "custom-identity.md");
     wf(customIdentityPath, "## Role\nCode Reviewer\n\n## Mission\nReview all PRs");
     const config = makeConfig({
-      engines: [{ engine: "kiro", model: "m", alias: "reviewer", identity: "custom-identity.md" }],
+      engines: [{ agent: "kiro", model: "m", alias: "reviewer", identity: "custom-identity.md" }],
     });
-    const prompt = buildPrompt(config, false, 1, config.engines[0]);
+    const prompt = buildPrompt(config, false, 1, config.agents[0]);
     expect(prompt).toContain("Code Reviewer");
   });
 

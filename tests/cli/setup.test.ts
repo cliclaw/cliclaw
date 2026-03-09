@@ -70,8 +70,8 @@ describe("setupCommand", () => {
     const paths = buildPaths(testDir);
     expect(existsSync(paths.configFile)).toBe(true);
     const config = JSON.parse(readFileSync(paths.configFile, "utf-8"));
-    expect(config.engines).toBeDefined();
-    expect(config.engines.length).toBeGreaterThan(0);
+    expect(config.agents).toBeDefined();
+    expect(config.agents.length).toBeGreaterThan(0);
   });
 
   it("creates all meta files", async () => {
@@ -123,7 +123,7 @@ describe("setupCommand", () => {
     const paths = buildPaths(testDir);
     if (existsSync(paths.configFile)) {
       const config = JSON.parse(readFileSync(paths.configFile, "utf-8"));
-      if (config.engines.length > 1) {
+      if (config.agents.length > 1) {
         expect(config.maxConcurrent).toBeDefined();
       }
     }
@@ -217,7 +217,7 @@ describe("setupCommand", () => {
       boundaries: 200, identity: 200, tools: 300, boot: 300,
     });
     expect(config.hooks).toBeDefined();
-    expect(config.engines).toBeDefined();
-    expect(config.engines.length).toBeGreaterThan(0);
+    expect(config.agents).toBeDefined();
+    expect(config.agents.length).toBeGreaterThan(0);
   });
 });

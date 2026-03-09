@@ -1,0 +1,13 @@
+{
+  "name": "Solo Developer",
+  "description": "Single full-stack developer with all responsibilities",
+  "agents": [
+    {
+      "agent": "kiro",
+      "model": "claude-opus-4",
+      "alias": "fullstack",
+      "identity": "staff-engineer.md",
+      "skills": ["tailwindcss", "daisyui"]
+    }
+  ]
+}

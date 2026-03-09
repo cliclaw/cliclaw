@@ -1,0 +1,19 @@
+{
+  "name": "Node.js + Vue.js",
+  "description": "Node.js backend with Vue.js frontend",
+  "agents": [
+    {
+      "agent": "codex",
+      "model": "gpt-4o",
+      "alias": "backend",
+      "identity": "typescript-dev.md"
+    },
+    {
+      "agent": "claude",
+      "model": "claude-sonnet-4-20250514",
+      "alias": "frontend",
+      "identity": "frontend-vue.md",
+      "skills": ["vue", "tailwindcss"]
+    }
+  ]
+}

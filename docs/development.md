@@ -20,7 +20,7 @@ When working from source, the Makefile wraps all commands:
 | Target                        | Description                            |
 |-------------------------------|----------------------------------------|
 | `make cron`                   | Start the loop                         |
-| `make cron ENGINE=cursor`     | Use a specific engine                  |
+| `make cron ENGINE=cursor`     | Use a specific agent                  |
 | `make cron DRY_RUN=1`         | Dry-run mode                           |
 | `make cron FOCUS="task"`      | Focus on a task                        |
 | `make setup`                  | Setup wizard                           |
@@ -105,7 +105,7 @@ Key files:
 - `src/index.ts` — Entry point + command router (keep minimal)
 - `src/core/types.ts` — All type definitions
 - `src/core/config.ts` — Configuration cascade
-- `src/engines/registry.ts` — Engine definitions
+- `src/agents/registry.ts` — Agent definitions
 - `src/prompts/builder.ts` — Prompt composition
 
 ## Contributing

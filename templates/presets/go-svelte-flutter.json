@@ -1,0 +1,49 @@
+{
+  "name": "Go + Svelte + Flutter",
+  "description": "Full-stack team with Go backend, Svelte frontend, and Flutter mobile",
+  "agents": [
+    {
+      "agent": "kiro",
+      "model": "claude-opus-4",
+      "alias": "ceo",
+      "identity": "ceo.md"
+    },
+    {
+      "agent": "claude",
+      "model": "claude-sonnet-4",
+      "alias": "cto",
+      "identity": "cto.md"
+    },
+    {
+      "agent": "kiro",
+      "model": "claude-opus-4",
+      "alias": "staff-engineer",
+      "identity": "staff-engineer.md"
+    },
+    {
+      "agent": "claude",
+      "model": "claude-sonnet-4",
+      "alias": "go-dev",
+      "identity": "go-dev.md"
+    },
+    {
+      "agent": "kiro",
+      "model": "claude-opus-4",
+      "alias": "frontend-svelte",
+      "identity": "frontend-svelte.md",
+      "skills": ["tailwindcss", "daisyui", "svelte-sonner", "skeleton-ui"]
+    },
+    {
+      "agent": "claude",
+      "model": "claude-sonnet-4",
+      "alias": "mobile-flutter",
+      "identity": "mobile-flutter.md"
+    },
+    {
+      "agent": "cursor",
+      "alias": "qa-playwright",
+      "identity": "qa-playwright.md",
+      "manual": true
+    }
+  ]
+}

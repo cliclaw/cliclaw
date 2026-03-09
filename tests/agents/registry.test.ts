@@ -5,13 +5,13 @@ vi.mock("node:child_process", () => ({
 }));
 
 import { execSync } from "node:child_process";
-import { getEngine, getAllEngines, isEngineAvailable, parseStreamLine } from "../src/engines/registry.js";
+import { getAgent, getAllAgents, isAgentAvailable, parseStreamLine } from "../src/agents/registry.js";
 
-describe("getEngine", () => {
+describe("getAgent", () => {
   it("returns config for all known engines", () => {
     const names = ["kiro", "claude", "cursor", "codex", "aider", "gemini", "copilot"] as const;
     for (const name of names) {
-      const engine = getEngine(name);
+      const engine = getAgent(name);
       expect(engine.name).toBe(name);
       expect(engine.command).toBeTruthy();
       expect(engine.timeout).toBeGreaterThan(0);
@@ -19,30 +19,30 @@ describe("getEngine", () => {
   });
 
   it("kiro uses kiro-cli command", () => {
-    const engine = getEngine("kiro");
+    const engine = getAgent("kiro");
     expect(engine.command).toBe("kiro-cli");
     expect(engine.stdinPrompt).toBe(false);
   });
 
   it("cursor uses agent command and stdinPrompt", () => {
-    const engine = getEngine("cursor");
+    const engine = getAgent("cursor");
     expect(engine.command).toBe("agent");
     expect(engine.stdinPrompt).toBe(true);
   });
 
   it("copilot uses copilot command", () => {
-    const engine = getEngine("copilot");
+    const engine = getAgent("copilot");
     expect(engine.command).toBe("copilot");
   });
 
   it("throws for unknown engine", () => {
-    expect(() => getEngine("unknown" as any)).toThrow("Unknown engine");
+    expect(() => getAgent("unknown" as any)).toThrow("Unknown agent");
   });
 });
 
 describe("buildArgs", () => {
   it("kiro builds correct args", () => {
-    const engine = getEngine("kiro");
+    const engine = getAgent("kiro");
     const args = engine.buildArgs({ prompt: "test", inputFile: "/tmp/in", resume: false, model: "m1" });
     expect(args).toContain("chat");
     expect(args).toContain("--no-interactive");
@@ -52,13 +52,13 @@ describe("buildArgs", () => {
   });
 
   it("kiro adds --resume when resume=true", () => {
-    const engine = getEngine("kiro");
+    const engine = getAgent("kiro");
     const args = engine.buildArgs({ prompt: "test", inputFile: "/tmp/in", resume: true, model: "m1" });
     expect(args).toContain("--resume");
   });
 
   it("claude builds correct args", () => {
-    const engine = getEngine("claude");
+    const engine = getAgent("claude");
     const args = engine.buildArgs({ prompt: "test", inputFile: "/tmp/in", resume: false, model: "m1" });
     expect(args).toContain("--dangerously-skip-permissions");
     expect(args).toContain("-p");
@@ -66,13 +66,13 @@ describe("buildArgs", () => {
   });
 
   it("claude adds --continue when resume=true", () => {
-    const engine = getEngine("claude");
+    const engine = getAgent("claude");
     const args = engine.buildArgs({ prompt: "test", inputFile: "/tmp/in", resume: true, model: "m1" });
     expect(args).toContain("--continue");
   });
 
   it("cursor builds correct args", () => {
-    const engine = getEngine("cursor");
+    const engine = getAgent("cursor");
     const args = engine.buildArgs({ prompt: "test", inputFile: "/tmp/in", resume: false, model: "m1" });
     expect(args).toContain("--yolo");
     expect(args).toContain("--model");
@@ -80,7 +80,7 @@ describe("buildArgs", () => {
   });
 
   it("codex builds correct args", () => {
-    const engine = getEngine("codex");
+    const engine = getAgent("codex");
     const args = engine.buildArgs({ prompt: "test", inputFile: "/tmp/in", resume: false, model: "m1" });
     expect(args).toContain("--full-auto");
     expect(args).toContain("--quiet");
@@ -88,7 +88,7 @@ describe("buildArgs", () => {
   });
 
   it("aider builds correct args", () => {
-    const engine = getEngine("aider");
+    const engine = getAgent("aider");
     const args = engine.buildArgs({ prompt: "test", inputFile: "/tmp/in", resume: false, model: "m1" });
     expect(args).toContain("--yes-always");
     expect(args).toContain("--message");
@@ -96,14 +96,14 @@ describe("buildArgs", () => {
   });
 
   it("gemini builds correct args", () => {
-    const engine = getEngine("gemini");
+    const engine = getAgent("gemini");
     const args = engine.buildArgs({ prompt: "test", inputFile: "/tmp/in", resume: false, model: "m1" });
     expect(args).toContain("-p");
     expect(args).toContain("test");
   });
 
   it("copilot builds correct args", () => {
-    const engine = getEngine("copilot");
+    const engine = getAgent("copilot");
     const args = engine.buildArgs({ prompt: "test", inputFile: "/tmp/in", resume: false, model: "m1" });
     expect(args).toContain("-p");
     expect(args).toContain("test");
@@ -111,26 +111,26 @@ describe("buildArgs", () => {
   });
 });
 
-describe("getAllEngines", () => {
-  it("returns all 7 engines", () => {
-    const all = getAllEngines();
+describe("getAllAgents", () => {
+  it("returns all 7 agents", () => {
+    const all = getAllAgents();
     expect(all).toHaveLength(7);
   });
 });
 
-describe("isEngineAvailable", () => {
+describe("isAgentAvailable", () => {
   it("returns true when command exists", () => {
     vi.mocked(execSync).mockImplementation(() => Buffer.from(""));
-    expect(isEngineAvailable("kiro")).toBe(true);
+    expect(isAgentAvailable("kiro")).toBe(true);
   });
 
   it("returns false when command not found", () => {
     vi.mocked(execSync).mockImplementation(() => { throw new Error("not found"); });
-    expect(isEngineAvailable("kiro")).toBe(false);
+    expect(isAgentAvailable("kiro")).toBe(false);
   });
 
   it("returns false for unknown engine", () => {
-    expect(isEngineAvailable("unknown" as any)).toBe(false);
+    expect(isAgentAvailable("unknown" as any)).toBe(false);
   });
 });
 
@@ -207,7 +207,7 @@ describe("parseStreamLine", () => {
 
 describe("parseOutput functions", () => {
   describe("cursor parseOutput (parseCursorOutput)", () => {
-    const engine = getEngine("cursor");
+    const engine = getAgent("cursor");
 
     it("extracts text from assistant messages with model_call_id", () => {
       const line = JSON.stringify({
@@ -238,7 +238,7 @@ describe("parseOutput functions", () => {
   });
 
   describe("claude parseOutput (parseClaudeOutput)", () => {
-    const engine = getEngine("claude");
+    const engine = getAgent("claude");
 
     it("extracts text from stream_event text_delta lines", () => {
       const line = JSON.stringify({
@@ -268,7 +268,7 @@ describe("parseOutput functions", () => {
   });
 
   describe("gemini parseOutput (parseGeminiOutput)", () => {
-    const engine = getEngine("gemini");
+    const engine = getAgent("gemini");
 
     it("extracts response field from JSON", () => {
       expect(engine.parseOutput!(JSON.stringify({ response: "gemini answer" }))).toBe("gemini answer");

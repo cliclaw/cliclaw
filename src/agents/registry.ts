@@ -3,7 +3,7 @@
  */
 
 import { execSync } from "node:child_process";
-import type { EngineConfig, EngineName, EngineRunOpts } from "../core/types.js";
+import type { AgentConfig, AgentName, AgentRunOpts } from "../core/types.js";
 
 /** Parse cursor stream-json: collect full assistant text messages (those with model_call_id) */
 function parseCursorOutput(stdout: string): string {
@@ -88,11 +88,11 @@ export function parseStreamLine(line: string): string | null {
     if (obj["type"] === "result" && typeof obj["result"] === "string") return (obj["result"] as string) + "\n";
     return null;
   } catch { /* plain text line */ }
-  // plain text (kiro, aider, codex, copilot) — add newline
+  // plain text (kiro, codex, copilot) — add newline
   return line + "\n";
 }
 
-const engines: Record<EngineName, EngineConfig> = {
+const agents: Record<AgentName, AgentConfig> = {
   kiro: {
     name: "kiro",
     command: "kiro-cli",
@@ -101,7 +101,7 @@ const engines: Record<EngineName, EngineConfig> = {
     supportsResume: true,
     lenientExit: true,
     stdinPrompt: false,
-    buildArgs: (opts: EngineRunOpts) => {
+    buildArgs: (opts: AgentRunOpts) => {
       const args = ["chat", "--no-interactive", "--trust-all-tools", "--model", opts.model];
       if (opts.resume) args.push("--resume");
       args.push(opts.prompt);
@@ -117,7 +117,7 @@ const engines: Record<EngineName, EngineConfig> = {
     lenientExit: true,
     stdinPrompt: false,
     parseOutput: parseClaudeOutput,
-    buildArgs: (opts: EngineRunOpts) => {
+    buildArgs: (opts: AgentRunOpts) => {
       const args = ["--dangerously-skip-permissions", "--model", opts.model, "--output-format", "stream-json", "--verbose"];
       if (opts.resume) args.push("--continue");
       args.push("-p", opts.prompt);
@@ -133,7 +133,7 @@ const engines: Record<EngineName, EngineConfig> = {
     lenientExit: false,
     stdinPrompt: true,
     parseOutput: parseCursorOutput,
-    buildArgs: (opts: EngineRunOpts) => {
+    buildArgs: (opts: AgentRunOpts) => {
       const args = [
         "--yolo", "--model", opts.model, "--trust", "-p",
         "--output-format", "stream-json", "--stream-partial-output",
@@ -150,64 +150,52 @@ const engines: Record<EngineName, EngineConfig> = {
     supportsResume: false,
     lenientExit: false,
     stdinPrompt: false,
-    buildArgs: (opts: EngineRunOpts) => {
+    buildArgs: (opts: AgentRunOpts) => {
       return ["--model", opts.model, "--full-auto", "--quiet", opts.prompt];
-    },
-  },
-  aider: {
-    name: "aider",
-    command: "aider",
-    model: "sonnet",
-    timeout: 3600,
-    supportsResume: false,
-    lenientExit: true,
-    stdinPrompt: false,
-    buildArgs: (opts: EngineRunOpts) => {
-      return ["--model", opts.model, "--yes-always", "--message", opts.prompt];
     },
   },
   gemini: {
     name: "gemini",
     command: "gemini",
-    model: "gemini-2.5-pro",
+    model: "gemini-2.0-flash-exp",
     timeout: 3600,
     supportsResume: false,
     lenientExit: true,
     stdinPrompt: false,
     parseOutput: parseGeminiOutput,
-    buildArgs: (opts: EngineRunOpts) => {
+    buildArgs: (opts: AgentRunOpts) => {
       return ["--model", opts.model, "--output-format", "json", "-p", opts.prompt];
     },
   },
   copilot: {
     name: "copilot",
     command: "copilot",
-    model: "gpt-4.1",
+    model: "gpt-4o",
     timeout: 3600,
     supportsResume: false,
     lenientExit: true,
     stdinPrompt: false,
-    buildArgs: (opts: EngineRunOpts) => {
+    buildArgs: (opts: AgentRunOpts) => {
       return ["-p", opts.prompt, "--model", opts.model];
     },
   },
 };
 
-export function getEngine(name: EngineName): EngineConfig {
-  const engine = engines[name];
-  if (!engine) throw new Error(`Unknown engine: ${name}`);
-  return engine;
+export function getAgent(name: AgentName): AgentConfig {
+  const agent = agents[name];
+  if (!agent) throw new Error(`Unknown agent: ${name}`);
+  return agent;
 }
 
-export function getAllEngines(): EngineConfig[] {
-  return Object.values(engines);
+export function getAllAgents(): AgentConfig[] {
+  return Object.values(agents);
 }
 
-export function isEngineAvailable(name: EngineName): boolean {
-  const engine = engines[name];
-  if (!engine) return false;
+export function isAgentAvailable(name: AgentName): boolean {
+  const agent = agents[name];
+  if (!agent) return false;
   try {
-    execSync(`command -v ${engine.command}`, { stdio: "ignore" });
+    execSync(`command -v ${agent.command}`, { stdio: "ignore" });
     return true;
   } catch {
     return false;

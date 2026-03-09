@@ -84,11 +84,11 @@ vi.mock("../src/utils/notify.js", () => ({
 }));
 
 vi.mock("../src/engines/registry.js", () => ({
-  isEngineAvailable: vi.fn(() => true),
+  isAgentAvailable: vi.fn(() => true),
 }));
 
 import { cronCommand } from "../src/cli/cron.js";
-import { runCycle, runParallelCycles } from "../src/engines/runner.js";
+import { runCycle, runParallelCycles } from "../src/agents/runner.js";
 import { writeState, readState } from "../src/core/state.js";
 import { runPreCycle, runPostCycle, runOnSuccess, runOnFailure } from "../src/core/hooks.js";
 import { saveSnapshot } from "../src/core/snapshots.js";
@@ -103,7 +103,7 @@ beforeEach(() => {
   const paths = buildPaths(testDir);
   ensureAllDirs(paths);
   writeFileSync(paths.configFile, JSON.stringify({
-    engines: [{ engine: "kiro", model: "test-model" }],
+    engines: [{ agent: "kiro", model: "test-model" }],
   }));
   vi.clearAllMocks();
   // Override CLICLAW_SLEEP_FAIL to 0 so failure sleep doesn't block
@@ -144,8 +144,8 @@ describe("cronCommand", () => {
     const paths = buildPaths(testDir);
     writeFileSync(paths.configFile, JSON.stringify({
       engines: [
-        { engine: "kiro", model: "m1" },
-        { engine: "claude", model: "m2" },
+        { agent: "kiro", model: "m1" },
+        { agent: "claude", model: "m2" },
       ],
     }));
 
@@ -171,8 +171,8 @@ describe("cronCommand", () => {
     const paths = buildPaths(testDir);
     writeFileSync(paths.configFile, JSON.stringify({
       engines: [
-        { engine: "kiro", model: "m1", alias: "kiro1" },
-        { engine: "claude", model: "m2", alias: "claude1" },
+        { agent: "kiro", model: "m1", alias: "kiro1" },
+        { agent: "claude", model: "m2", alias: "claude1" },
       ],
     }));
 

@@ -5,19 +5,19 @@
 
 import { rmSync, readdirSync, readFileSync, existsSync } from "node:fs";
 import { createInterface } from "node:readline";
-import { resolveConfig, ensureAllDirs, primaryEngine } from "../core/config.js";
+import { resolveConfig, ensureAllDirs, primaryAgent } from "../core/config.js";
 import { initLogger, logInfo, logError, logWarn, logJson } from "../core/logger.js";
 import { initState, readState, writeState } from "../core/state.js";
 import { initMemory, appendToMemory, extractMemoryAppend } from "../core/memory.js";
 import { killPrevious, acquireLock, releaseLock, killAgentProcesses } from "../core/lock.js";
 import { buildPrompt, estimatePromptTokens, hashPrompt, logPromptStats } from "../prompts/builder.js";
-import { runCycle, runParallelCycles, stopAllAgents } from "../engines/runner.js";
+import { runCycle, runParallelCycles, stopAllAgents } from "../agents/runner.js";
 import { formatCost } from "../core/cost.js";
 import { saveSnapshot } from "../core/snapshots.js";
 import { runPreCycle, runPostCycle, runOnSuccess, runOnFailure, parseAgentSignals } from "../core/hooks.js";
 import { sendNotification } from "../utils/notify.js";
-import { isEngineAvailable } from "../engines/registry.js";
-import type { ClawConfig, EngineEntry } from "../core/types.js";
+import { isAgentAvailable } from "../agents/registry.js";
+import type { ClawConfig, AgentEntry } from "../core/types.js";
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -52,21 +52,21 @@ Arguments:
   focus                  Optional task focus (e.g., "fix tests")
 
 Options:
-  --engine <name>        Engine to use (kiro, claude, cursor, etc.)
+  --agent <name>        Engine to use (kiro, claude, cursor, etc.)
   --model <name>         Model to use
   --project-root <path>  Project root directory
   --max-loop <n>         Max cycles (0 = unlimited)
   --sleep <seconds>      Sleep between cycles
   --focus <task>         Task focus
   --dry-run              Preview prompts without running
-  --parallel             Run all configured engines in parallel
+  All non-manual agents run in parallel by default
   --continue             Resume from last prompt
   --help, -h             Show this help
 
 Examples:
   cliclaw cron                           # Start with default config
   cliclaw cron "fix tests"               # Focus on specific task
-  cliclaw cron --engine=claude           # Use specific engine
+  cliclaw cron --agent=claude           # Use specific engine
   cliclaw cron --dry-run                 # Preview mode
   cliclaw cron --parallel --max-loop=5   # Parallel mode, 5 cycles
 `;
@@ -85,15 +85,15 @@ function parseArgs(args: string[]): { focus: string | null; overrides: Partial<C
       case "-h":
         showHelp = true;
         break;
-      case "--engine":
+      case "--agent":
         if (next) {
-          overrides.engines = [{ engine: next as EngineEntry["engine"], model: "" }];
+          overrides.agents = [{ agent: next as AgentEntry["agent"], model: "" }];
           i++;
         }
         break;
       case "--model":
-        if (next && overrides.engines?.[0]) {
-          overrides.engines[0].model = next;
+        if (next && overrides.agents?.[0]) {
+          overrides.agents[0].model = next;
           i++;
         }
         break;
@@ -111,9 +111,6 @@ function parseArgs(args: string[]): { focus: string | null; overrides: Partial<C
         break;
       case "--dry-run":
         overrides.dryRun = true;
-        break;
-      case "--parallel":
-        overrides.parallel = true;
         break;
       case "--continue":
         continueMode = true;
@@ -152,12 +149,12 @@ export async function cronCommand(args: string[]): Promise<void> {
   }
 
   // Validate parallel: require aliases for duplicate engines
-  if (config.parallel && config.engines.length > 1) {
+  if (false && config.agents.length > 1) {
     const seen = new Set<string>();
-    for (const e of config.engines) {
-      const alias = e.alias ?? e.engine;
+    for (const e of config.agents) {
+      const alias = e.alias ?? e.agent;
       if (seen.has(alias)) {
-        console.error(`Error: Duplicate engine "${e.engine}" requires unique aliases in config.json`);
+        console.error(`Error: Duplicate engine "${e.agent}" requires unique aliases in config.json`);
         process.exit(1);
       }
       seen.add(alias);
@@ -177,7 +174,7 @@ export async function cronCommand(args: string[]): Promise<void> {
 
   let shutdownRequested = false;
   let consecutiveFails = 0;
-  let activeIdx = 0; // Index into config.engines
+  let activeIdx = 0; // Index into config.agents
 
   const shutdown = (): void => {
     if (shutdownRequested) return;
@@ -196,12 +193,12 @@ export async function cronCommand(args: string[]): Promise<void> {
   process.on("SIGTERM", shutdown);
   process.on("SIGQUIT", shutdown);
 
-  const primary = primaryEngine(config);
-  const engineList = config.engines.map((e) => e.alias ?? e.engine).join(", ");
+  const primary = primaryAgent(config);
+  const engineList = config.agents.map((e) => e.alias ?? e.agent).join(", ");
   logInfo(`=== Starting CLIClaw Autonomous Agent Loop ===`);
   const maxLoopDisplay = config.maxLoop === 0 ? "unlimited" : config.maxLoop.toString();
-  logInfo(`Primary: ${primary.alias ?? primary.engine} (${primary.model}) | Engines: [${engineList}] | Max: ${maxLoopDisplay} | Budget: ${config.tokenBudget} tokens`);
-  if (config.parallel) logInfo(`Parallel mode: ${config.engines.length} engines, max ${config.maxConcurrent} concurrent`);
+  logInfo(`Primary: ${primary.alias ?? primary.agent} (${primary.model}) | Engines: [${engineList}] | Max: ${maxLoopDisplay} | Budget: ${config.tokenBudget} tokens`);
+  if (false) logInfo(`Parallel mode: ${config.agents.length} engines, max ${config.maxConcurrent} concurrent`);
   if (config.dryRun) logInfo("DRY RUN mode — prompts will be logged but not sent to agents");
   if (focus) logInfo(`Focus: ${focus}`);
 
@@ -209,6 +206,9 @@ export async function cronCommand(args: string[]): Promise<void> {
     logInfo(`Idle pause: waiting ${config.idleBeforeStart}s before starting...`);
     await sleep(config.idleBeforeStart * 1000);
   }
+
+  // Track per-agent last-run timestamps for individual sleep intervals
+  const lastRunAt = new Map<string, number>();
 
   for (let cycle = 1; config.maxLoop === 0 || cycle <= config.maxLoop; cycle++) {
     if (shutdownRequested) break;
@@ -220,11 +220,11 @@ export async function cronCommand(args: string[]): Promise<void> {
     runPreCycle(config.hooks, config.projectRoot, cycle, config.hookTimeout);
 
     const enableDiff = cycle > 1 && cycle % config.freshSessionEvery !== 0;
-    const active = config.engines[activeIdx] ?? primary;
+    const active = config.agents[activeIdx] ?? primary;
 
     let prompt: string;
     if (continueMode && cycle === 1) {
-      const alias = active.alias ?? active.engine;
+      const alias = active.alias ?? active.agent;
       const lastFile = findLastPromptFile(paths.tmpDir, alias) ?? findLastPromptFile(paths.tmpDir);
       if (lastFile) {
         prompt = readFileSync(lastFile, "utf-8");
@@ -251,9 +251,41 @@ export async function cronCommand(args: string[]): Promise<void> {
     let success = false;
     let combinedOutput = "";
 
-    if (config.parallel && config.engines.length > 1) {
-      // Parallel: each engine gets its own prompt (respects per-engine identity)
-      const results = await runParallelCycles(config, prompt, cycle, config.engines, (entry) =>
+    // Determine which agents to run:
+    // - If --agent specified: run only that specific agent (including manual ones)
+    // - Otherwise: run all non-manual agents whose sleep interval has elapsed
+    const specificAgent = overrides.agents?.[0];
+    const now = Date.now();
+    const agentsToRun = specificAgent
+      ? config.agents.filter(a => (a.alias ?? a.agent) === (specificAgent.alias ?? specificAgent.agent))
+      : config.agents.filter(a => {
+          if (a.manual) return false;
+          const key = a.alias ?? a.agent;
+          const interval = (a.sleepNormal ?? config.sleepNormal) * 1000;
+          const last = lastRunAt.get(key) ?? 0;
+          return now - last >= interval;
+        });
+
+    if (agentsToRun.length === 0) {
+      // No agents due yet — sleep until the nearest one is ready
+      const nonManual = config.agents.filter(a => !a.manual);
+      const nextDue = Math.min(...nonManual.map(a => {
+        const key = a.alias ?? a.agent;
+        const interval = (a.sleepNormal ?? config.sleepNormal) * 1000;
+        const last = lastRunAt.get(key) ?? 0;
+        return Math.max(0, interval - (now - last));
+      }));
+      const waitSec = Math.max(1, Math.ceil(nextDue / 1000));
+      logInfo(`No agents due — sleeping ${waitSec}s until next agent is ready...`);
+      await sleep(nextDue || 1000);
+      continue;
+    }
+
+    logInfo(`Running: ${agentsToRun.map(a => a.alias ?? a.agent).join(", ")}`);
+
+    if (agentsToRun.length > 1) {
+      // Parallel: each agent gets its own prompt (respects per-agent identity)
+      const results = await runParallelCycles(config, prompt, cycle, agentsToRun, (entry) =>
         buildPrompt(config, enableDiff, cycle, entry)
       );
       for (const r of results) {
@@ -265,9 +297,9 @@ export async function cronCommand(args: string[]): Promise<void> {
         if (mem) memAppend(mem);
       }
     } else {
-      // Single: use active engine (may have been rotated)
-      const active = config.engines[activeIdx] ?? primary;
-      const result = await runCycle(config, prompt, cycle, active.engine, active.model);
+      // Single: use the one agent (either specified via --agent or the only non-manual one)
+      const active = agentsToRun[0] ?? config.agents[activeIdx] ?? primary;
+      const result = await runCycle(config, prompt, cycle, active.agent, active.model);
       if (shutdownRequested) break;
       totalTokens = result.tokenEstimate;
       totalCost = result.costEstimate;
@@ -319,6 +351,9 @@ export async function cronCommand(args: string[]): Promise<void> {
       }
 
       const sleepTime = computeSleep(config.sleepNormal, stallCycles, config.stallBackoffMultiplier, config.stallBackoffCap);
+      // Record last-run time for agents that ran
+      const ranAt = Date.now();
+      for (const a of agentsToRun) lastRunAt.set(a.alias ?? a.agent, ranAt);
       logInfo(`Sleeping ${sleepTime}s...`);
       await sleep(sleepTime * 1000);
     } else {
@@ -326,14 +361,14 @@ export async function cronCommand(args: string[]): Promise<void> {
       logError(`AGENT_FAILED consecutive=${consecutiveFails} cycle=${cycle}`);
 
       // Engine rotation after repeated failures
-      if (consecutiveFails >= config.engineRotateAfter && !config.parallel && config.engines.length > 1) {
-        const nextIdx = (activeIdx + 1) % config.engines.length;
-        const next = config.engines[nextIdx]!;
-        if (isEngineAvailable(next.engine)) {
-          const currentAlias = config.engines[activeIdx]?.alias ?? config.engines[activeIdx]?.engine ?? "unknown";
-          const nextAlias = next.alias ?? next.engine;
-          logWarn(`Engine rotation: ${currentAlias} → ${nextAlias} (${next.model})`);
-          memAppend(`Engine rotation: ${currentAlias} failed ${consecutiveFails}x, switched to ${nextAlias}.`);
+      if (consecutiveFails >= config.agentRotateAfter && !false && config.agents.length > 1) {
+        const nextIdx = (activeIdx + 1) % config.agents.length;
+        const next = config.agents[nextIdx]!;
+        if (isAgentAvailable(next.agent)) {
+          const currentAlias = config.agents[activeIdx]?.alias ?? config.agents[activeIdx]?.agent ?? "unknown";
+          const nextAlias = next.alias ?? next.agent;
+          logWarn(`Agent rotation: ${currentAlias} → ${nextAlias} (${next.model})`);
+          memAppend(`Agent rotation: ${currentAlias} failed ${consecutiveFails}x, switched to ${nextAlias}.`);
           activeIdx = nextIdx;
           consecutiveFails = 0;
         }
@@ -359,6 +394,9 @@ export async function cronCommand(args: string[]): Promise<void> {
       }
 
       const sleepTime = computeSleep(config.sleepAfterFailure, stallCycles, config.stallBackoffMultiplier, config.stallBackoffCap);
+      // Record last-run time even on failure
+      const ranAt = Date.now();
+      for (const a of agentsToRun) lastRunAt.set(a.alias ?? a.agent, ranAt);
       logInfo(`Sleeping ${sleepTime}s after failure...`);
       await sleep(sleepTime * 1000);
     }

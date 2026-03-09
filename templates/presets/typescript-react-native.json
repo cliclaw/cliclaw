@@ -1,0 +1,52 @@
+{
+  "name": "TypeScript + React + React Native",
+  "description": "TypeScript-first team with React web and React Native mobile",
+  "agents": [
+    {
+      "agent": "kiro",
+      "model": "claude-opus-4",
+      "alias": "ceo",
+      "identity": "ceo.md"
+    },
+    {
+      "agent": "claude",
+      "model": "claude-sonnet-4",
+      "alias": "cto",
+      "identity": "cto.md"
+    },
+    {
+      "agent": "kiro",
+      "model": "claude-opus-4",
+      "alias": "staff-engineer",
+      "identity": "staff-engineer.md"
+    },
+    {
+      "agent": "claude",
+      "model": "claude-sonnet-4",
+      "alias": "typescript-backend",
+      "identity": "typescript-dev.md",
+      "focus": "backend"
+    },
+    {
+      "agent": "kiro",
+      "model": "claude-opus-4",
+      "alias": "typescript-frontend",
+      "identity": "typescript-dev.md",
+      "focus": "frontend",
+      "skills": ["tailwindcss", "daisyui"]
+    },
+    {
+      "agent": "claude",
+      "model": "claude-sonnet-4",
+      "alias": "mobile-react-native",
+      "identity": "mobile-flutter.md",
+      "focus": "mobile"
+    },
+    {
+      "agent": "cursor",
+      "alias": "qa-playwright",
+      "identity": "qa-playwright.md",
+      "manual": true
+    }
+  ]
+}

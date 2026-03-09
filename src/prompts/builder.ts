@@ -12,7 +12,8 @@ import { readState } from "../core/state.js";
 import { scanAndRedact } from "../core/secrets.js";
 import { estimateTokens } from "../core/cost.js";
 import { logInfo, logWarn } from "../core/logger.js";
-import type { ClawConfig, EngineEntry } from "../core/types.js";
+import { getUnreadMessages, getAllowedTargets, getAgentTasks } from "../core/tracker.js";
+import type { ClawConfig, AgentEntry } from "../core/types.js";
 
 function readFileOr(path: string, fallback: string): string {
   if (!existsSync(path)) return fallback;
@@ -22,6 +23,26 @@ function readFileOr(path: string, fallback: string): string {
     return fallback;
   }
 }
+
+/** Load skill files from .cliclaw/meta/skills/ */
+function loadSkills(projectRoot: string, skills: string[]): string {
+  if (skills.length === 0) return "";
+  
+  const skillsDir = resolve(projectRoot, ".cliclaw", "meta", "skills");
+  const parts: string[] = [];
+  
+  for (const skill of skills) {
+    const content = readFileOr(resolve(skillsDir, `${skill}.md`), "");
+    if (content) {
+      parts.push(cleanMetaContent(content));
+    } else {
+      logWarn(`Skill not found: ${skill}`);
+    }
+  }
+  
+  return parts.join("\n\n");
+}
+
 
 /** Strip content that wastes tokens: markdown title headers, HTML comments, empty placeholders, boilerplate descriptions */
 function cleanMetaContent(raw: string): string {
@@ -72,12 +93,69 @@ function diffAwareSection(
   return truncate(content, maxTokens);
 }
 
-export function buildPrompt(config: ClawConfig, enableDiff = false, cycle = 0, activeEngine?: EngineEntry): string {
+/** Build tracker section with unread messages and communication protocol */
+function buildTrackerSection(projectRoot: string, agentAlias: string): string | null {
+  const unreadMessages = getUnreadMessages(projectRoot, agentAlias);
+  const allowedTargets = getAllowedTargets(projectRoot, agentAlias);
+  const tasks = getAgentTasks(projectRoot, agentAlias);
+
+  // Skip if no tracker activity and no allowed communication
+  if (unreadMessages.length === 0 && allowedTargets.length === 0 && tasks.length === 0) {
+    return null;
+  }
+
+  const parts: string[] = ["\n## Agent Coordination"];
+
+  // Communication protocol
+  if (allowedTargets.length > 0) {
+    parts.push(`\n### Communication Protocol`);
+    parts.push(`You can communicate with: ${allowedTargets.join(", ")}`);
+    parts.push(`\nTo send a message, output:\n\`\`\`json\n{"type": "message", "to": "agent-alias", "content": "your message"}\n\`\`\``);
+  }
+
+  // Unread messages
+  if (unreadMessages.length > 0) {
+    parts.push(`\n### Unread Messages (${unreadMessages.length})`);
+    unreadMessages.slice(0, 5).forEach(msg => {
+      const time = new Date(msg.timestamp).toLocaleString();
+      const disconnected = !allowedTargets.includes(msg.from);
+      const prefix = disconnected ? `[CHANNEL SEVERED] ` : '';
+      parts.push(`- ${prefix}**From ${msg.from}** (${time}): ${msg.content}`);
+    });
+    if (unreadMessages.length > 5) {
+      parts.push(`- ... and ${unreadMessages.length - 5} more`);
+    }
+  }
+
+  // Tasks
+  if (tasks.length > 0) {
+    parts.push(`\n### Your Tasks (${tasks.length})`);
+    tasks.slice(0, 5).forEach(task => {
+      const assignedBy = task.agent !== agentAlias ? ` (from ${task.agent})` : '';
+      parts.push(`- [${task.status}] ${task.title}${assignedBy}`);
+    });
+    if (tasks.length > 5) {
+      parts.push(`- ... and ${tasks.length - 5} more`);
+    }
+  }
+
+  // Always show task protocol so agents can create/assign tasks
+  parts.push(`\n### Task Protocol`);
+  parts.push(`To create a task (assign to yourself or another agent):\n\`\`\`json\n{"type": "task", "action": "create", "task_id": "task_xxx", "title": "Task title", "status": "todo", "assignee": "agent-alias"}\n\`\`\``);
+  parts.push(`To update a task:\n\`\`\`json\n{"type": "task", "action": "update", "task_id": "task_xxx", "status": "in_progress"}\n\`\`\``);
+
+  return parts.join("\n");
+}
+
+
+export function buildPrompt(config: ClawConfig, enableDiff = false, cycle = 0, activeEngine?: AgentEntry): string {
   const { paths } = config;
 
   const identityPath = activeEngine?.identity
     ? resolve(config.projectRoot, activeEngine.identity)
     : paths.identityFile;
+
+  const agentAlias = activeEngine?.alias || activeEngine?.agent || "agent";
 
   const memory = readMemorySnippet(paths.memoryFile);
   const youRaw = cleanMetaContent(readFileOr(paths.youFile, ""));
@@ -86,6 +164,9 @@ export function buildPrompt(config: ClawConfig, enableDiff = false, cycle = 0, a
   const identityRaw = cleanMetaContent(readFileOr(identityPath, ""));
   const toolsRaw = cleanMetaContent(readFileOr(paths.toolsFile, ""));
   const bootRaw = cleanMetaContent(readFileOr(paths.bootFile, ""));
+  
+  // Load skills for this agent
+  const skillsRaw = loadSkills(config.projectRoot, activeEngine?.skills || []);
 
   const lastSuccess = readState("lastSuccess") ?? "never";
   const lastHash = enableDiff ? (readState("lastPromptHash") as string | undefined) : undefined;
@@ -96,6 +177,12 @@ export function buildPrompt(config: ClawConfig, enableDiff = false, cycle = 0, a
   // Header
   parts.push(config.promptHeader);
   parts.push(`\nLast successful cycle: ${lastSuccess}`);
+
+  // Tracker: Unread messages and communication protocol
+  const trackerSection = buildTrackerSection(config.projectRoot, agentAlias);
+  if (trackerSection) {
+    parts.push(trackerSection);
+  }
 
   // Memory (highest priority)
   if (memory && memory !== "(no persistent memory yet)") {
@@ -115,6 +202,11 @@ export function buildPrompt(config: ClawConfig, enableDiff = false, cycle = 0, a
   // Identity (agent persona + tone)
   if (identityRaw && !isOnlyTemplate(identityRaw)) {
     parts.push("\n## Agent Identity\n" + truncate(identityRaw, budgets.identity));
+  }
+  
+  // Skills
+  if (skillsRaw) {
+    parts.push("\n## Skills\n" + skillsRaw);
   }
 
   // Boundaries

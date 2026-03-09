@@ -8,7 +8,7 @@ Complete technical reference for CLIClaw — an autonomous AI agent loop runner.
 - **[Architecture](architecture.md)** — System design and code structure
 - **[Configuration](configuration.md)** — Config files, environment variables, project setup
 - **[Meta Files](meta-files.md)** — Prompt composition system
-- **[Engines](engines.md)** — Engine registry, runner, parallel execution
+- **[Agents](agents.md)** — Agent registry, runner, parallel execution
 - **[Autonomous Loop](autonomous-loop.md)** — Loop behavior, adaptive sleep, rotation
 - **[Memory](memory.md)** — Vector memory and semantic search
 - **[Features](features.md)** — Cost tracking, secrets, boundaries, hooks, snapshots
@@ -32,13 +32,13 @@ cliclaw cron
 
 **Project-driven** — One loop per repo, isolated state and memory
 
-**Multi-engine** — 7 AI CLI tools supported (Kiro, Claude, Cursor, Codex, Aider, Gemini, Copilot)
+**Multi-agent** — 6 AI CLI tools supported (Kiro, Claude, Cursor, Codex, Gemini, Copilot)
 
 **Zero API keys** — Uses your existing CLI tool subscriptions
 
 **Token-aware** — Builds prompts within budget, tracks costs
 
-**Autonomous** — Adaptive sleep, engine rotation, stall detection
+**Autonomous** — Adaptive sleep, agent rotation, stall detection
 
 ## Quick Reference
 

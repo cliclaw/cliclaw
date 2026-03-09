@@ -3,8 +3,8 @@ import { join } from "node:path";
 import { spawn } from "node:child_process";
 import { createInterface } from "node:readline";
 import { resolveConfig, ensureAllDirs } from "../core/config.js";
-import { getEngine } from "../engines/registry.js";
-import type { EngineEntry } from "../core/types.js";
+import { getAgent } from "../agents/registry.js";
+import type { AgentEntry } from "../core/types.js";
 
 // ── ANSI helpers ──────────────────────────────────────────────────────────────
 const c = {
@@ -35,7 +35,7 @@ Usage:
   cliclaw chat [options]
 
 Options:
-  --engine <name>        Use specific engine by alias or name
+  --agent <name>        Use specific engine by alias or name
   --help, -h             Show this help
 
 Slash Commands:
@@ -46,7 +46,7 @@ Slash Commands:
 
 Examples:
   cliclaw chat                    # Use primary engine
-  cliclaw chat --engine=kiro      # Use specific engine
+  cliclaw chat --agent=kiro      # Use specific engine
 `;
 
 // ── Persistence ───────────────────────────────────────────────────────────────
@@ -100,13 +100,13 @@ function extractIdentityBlock(output: string): string | null {
   return content || null;
 }
 
-function resolveEngine(args: string[], config: ReturnType<typeof resolveConfig>): EngineEntry {
-  const flag = args.find((a) => a.startsWith("--engine="));
-  const target = flag ? flag.slice("--engine=".length) : null;
+function resolveEngine(args: string[], config: ReturnType<typeof resolveConfig>): AgentEntry {
+  const flag = args.find((a) => a.startsWith("--agent="));
+  const target = flag ? flag.slice("--agent=".length) : null;
   if (target) {
-    return config.engines.find((e) => e.alias === target || e.engine === target) ?? config.engines[0]!;
+    return config.agents.find((e) => e.alias === target || e.agent === target) ?? config.agents[0]!;
   }
-  return config.engines[0]!;
+  return config.agents[0]!;
 }
 
 function spinner(label: string): () => void {
@@ -126,7 +126,7 @@ function printBanner(engineLabel: string, histFile: string): void {
   const line = "─".repeat(w);
   console.log(`\n${paint(c.cyan, `╭${line}╮`)}`);
   console.log(paint(c.cyan, "│") + paint(c.bold + c.white, "  🤖 CLIClaw Chat".padEnd(w)) + paint(c.cyan, "│"));
-  console.log(paint(c.cyan, "│") + paint(c.dim, `  engine: ${engineLabel}`.padEnd(w)) + paint(c.cyan, "│"));
+  console.log(paint(c.cyan, "│") + paint(c.dim, `  agent: ${engineLabel}`.padEnd(w)) + paint(c.cyan, "│"));
   console.log(paint(c.cyan, "│") + paint(c.dim, `  history: ${histFile}`.padEnd(w)) + paint(c.cyan, "│"));
   console.log(`${paint(c.cyan, `╰${line}╯`)}`);
   console.log(paint(c.gray, `  Type ${paint(c.white, "/help")} for commands, ${paint(c.white, "/exit")} or Ctrl+C to quit.\n`));
@@ -155,9 +155,9 @@ function printHistory(history: Message[], agentName: string): void {
 }
 
 // ── Prompt runner ─────────────────────────────────────────────────────────────
-function runOneShotPrompt(entry: EngineEntry, prompt: string, cwd: string, tmpDir: string, agentName: string): Promise<string> {
+function runOneShotPrompt(entry: AgentEntry, prompt: string, cwd: string, tmpDir: string, agentName: string): Promise<string> {
   return new Promise((resolve) => {
-    const engine = getEngine(entry.engine);
+    const engine = getAgent(entry.agent);
 
     mkdirSync(tmpDir, { recursive: true });
     const inputFile = join(tmpDir, `chat-input-${Date.now()}.txt`);
@@ -219,7 +219,7 @@ export async function chatCommand(args: string[]): Promise<void> {
     ? `${config.projectRoot}/${entry.identity}`
     : config.paths.identityFile;
 
-  const engineLabel = entry.alias ?? entry.engine;
+  const engineLabel = entry.alias ?? entry.agent;
   const histFile = historyFile(config.paths.tmpDir, engineLabel);
 
   mkdirSync(config.paths.tmpDir, { recursive: true });

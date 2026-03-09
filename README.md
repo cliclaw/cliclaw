@@ -4,9 +4,9 @@
 
 # CLIClaw
 
-Autonomous AI agent loop runner — multi-engine, token-aware, cost-effective.
+Autonomous AI agent loop runner — multi-agent, token-aware, cost-effective.
 
-Run AI coding agents (Kiro, Claude, Cursor, Codex, Aider, Gemini, Copilot) in a continuous loop on any project. CLIClaw builds context-aware prompts, tracks costs, rotates engines on failure, and keeps your codebase moving forward autonomously.
+Run AI coding agents (Kiro, Claude, Cursor, Codex, Gemini, Copilot) in a continuous loop on any project. CLIClaw builds context-aware prompts, tracks costs, rotates agents on failure, and keeps your codebase moving forward autonomously.
 
 ## Why CLIClaw?
 
@@ -28,7 +28,7 @@ cliclaw setup         # One-time interactive setup
 cliclaw cron          # Start the autonomous loop
 ```
 
-That's it. CLIClaw will continuously prompt your chosen AI engine to work on the project, track progress, manage memory, and adapt when things stall.
+That's it. CLIClaw will continuously prompt your chosen AI agent to work on the project, track progress, manage memory, and adapt when things stall.
 
 ## Commands
 
@@ -54,25 +54,25 @@ cliclaw help             Show all commands
 ### Options
 
 ```bash
-cliclaw cron --engine claude       # Use a specific engine
+cliclaw cron --agent claude       # Use a specific agent
 cliclaw cron --dry-run             # Preview prompts without running agents
-cliclaw cron --parallel            # Run all configured engines simultaneously
+cliclaw cron --parallel            # Run all configured agents simultaneously
 cliclaw cron --focus "fix auth"    # Focus on a specific task
 cliclaw cron --max-loop 10         # Limit cycle count (0 = unlimited, default)
 cliclaw cron --sleep 30            # Set sleep interval between cycles
-cliclaw chat --engine=kiro         # Use specific engine for chat
+cliclaw chat --agent=kiro         # Use specific agent for chat
 ```
 
 ## Configuration
 
-CLIClaw uses an `engines` array as the primary config unit. The first engine is the primary; all are available for parallel execution and rotation.
+CLIClaw uses an `agents` array as the primary config unit. The first agent is the primary; all are available for parallel execution and rotation.
 
 ```json
 {
-  "engines": [
-    { "engine": "kiro", "model": "claude-sonnet-4.6", "alias": "kiro1" },
-    { "engine": "kiro", "model": "claude-sonnet-4.6", "alias": "kiro2" },
-    { "engine": "cursor", "model": "gpt-5.2-high" }
+  "agents": [
+    { "agent": "kiro", "model": "claude-sonnet-4.6", "alias": "kiro1" },
+    { "agent": "kiro", "model": "claude-sonnet-4.6", "alias": "kiro2" },
+    { "agent": "cursor", "model": "gpt-5.2-high" }
   ],
   "tokenBudget": 8000,
   "maxConcurrent": 2,
@@ -85,7 +85,7 @@ CLIClaw uses an `engines` array as the primary config unit. The first engine is 
 }
 ```
 
-When you have duplicate engines (e.g. two kiro instances), give each a unique `alias`. The setup wizard handles this automatically.
+When you have duplicate agents (e.g. two kiro instances), give each a unique `alias`. The setup wizard handles this automatically.
 
 ## Agent Signals
 
@@ -99,17 +99,16 @@ The AI can embed special signals in its response to control the loop:
 
 Teach your AI when to use them via `.cliclaw/meta/identity.md`. See [docs/autonomous-loop.md](docs/autonomous-loop.md#agent-signals) for full documentation.
 
-## Supported Engines
+## Supported Agents
 
-| Engine  | CLI        | Default Model            |
+| Agent   | CLI        | Default Model            |
 |---------|------------|--------------------------|
-| kiro    | `kiro-cli` | claude-opus-4.6          |
+| kiro    | `kiro-cli` | claude-sonnet-4-20250514 |
 | claude  | `claude`   | claude-sonnet-4-20250514 |
-| cursor  | `agent`    | gpt-5.2-high             |
-| codex   | `codex`    | o4-mini                  |
-| aider   | `aider`    | sonnet                   |
-| gemini  | `gemini`   | gemini-2.5-pro           |
-| copilot | `copilot`  | gpt-4.1                  |
+| cursor  | `agent`    | claude-sonnet-4          |
+| codex   | `codex`    | gpt-4o                   |
+| gemini  | `gemini`   | gemini-2.0-flash-exp     |
+| copilot | `copilot`  | gpt-4o                   |
 
 > **Kiro note:** `kiro-cli` may spawn subagents which can cause issues in autonomous loops. To disable subagents, create `~/.kiro/agents/Basic.json`:
 >
@@ -143,9 +142,9 @@ Teach your AI when to use them via `.cliclaw/meta/identity.md`. See [docs/autono
 
 1. **Setup** — `cliclaw setup` creates a `.cliclaw/` directory in your project with config, meta files, and AI persona settings.
 2. **Prompt building** — Each cycle, CLIClaw composes a token-aware prompt from your memory, persona, project context, and task focus.
-3. **Agent execution** — The prompt is sent to your chosen AI CLI engine, which works on the codebase.
+3. **Agent execution** — The prompt is sent to your chosen AI CLI agent, which works on the codebase.
 4. **Progress tracking** — CLIClaw monitors output, tracks costs, detects stalls, and saves state snapshots.
-5. **Adaptation** — On repeated failures, it backs off with longer sleep intervals and rotates to the next configured engine.
+5. **Adaptation** — On repeated failures, it backs off with longer sleep intervals and rotates to the next configured agent.
 6. **Loop** — Repeat until the max cycle count is reached or you stop it.
 
 ## Testing

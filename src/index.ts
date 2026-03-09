@@ -16,6 +16,7 @@ import { auditCommand } from "./cli/audit.js";
 import { rollbackCommand } from "./cli/rollback.js";
 import { upgradeCommand } from "./cli/upgrade.js";
 import { chatCommand } from "./cli/chat.js";
+import { trackerCommand } from "./cli/tracker.js";
 
 const HELP = `
 CLIClaw — Autonomous AI Agent Loop Runner
@@ -24,12 +25,13 @@ Usage:
   cliclaw <command> [options]
 
 Commands:
-  cron [focus]           Start the autonomous agent loop
-                         Options: --engine, --model, --dry-run, --parallel, --focus, --max-loop, --sleep
+  cron [focus]           Start the autonomous agent loop (all non-manual agents run in parallel)
+                         Options: --agent, --model, --dry-run, --focus, --max-loop, --sleep
   chat                   Interactive chat that updates agent identity
-                         Options: --engine=<alias|engine>
-  setup                  Interactive setup wizard
+                         Options: --agent=<alias|name>
+  setup                  Interactive setup wizard with identity templates
   identity               Configure agent identity interactively
+  tracker                Start the tracker web UI (install via setup)
   memory                 View and optimize persistent memory
   memory search <term>   Search through memory entries
   memory search <term> --semantic  Semantic search using vector similarity
@@ -43,7 +45,7 @@ Commands:
   upgrade                Upgrade CLIClaw to the latest version
   help                   Show this help
 
-Engines: kiro | claude | cursor | codex | aider | gemini | copilot
+Agents: kiro | claude | cursor | codex | gemini | copilot
 `;
 
 type CommandFn = (args: string[]) => Promise<void>;
@@ -53,6 +55,7 @@ const commands: Record<string, CommandFn> = {
   chat: chatCommand,
   setup: setupCommand,
   identity: identityCommand,
+  tracker: trackerCommand,
   memory: memoryCommand,
   status: statusCommand,
   clean: cleanCommand,

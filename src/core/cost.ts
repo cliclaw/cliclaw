@@ -2,7 +2,7 @@
  * Cost tracking — per-model pricing and estimation.
  */
 
-import type { EngineName, ModelPricing } from "./types.js";
+import type { AgentName, ModelPricing } from "./types.js";
 
 /** USD per 1M tokens — approximate public pricing as of early 2026 */
 const PRICING: Record<string, ModelPricing> = {
@@ -45,6 +45,6 @@ export function estimateTokens(text: string): number {
 }
 
 /** Engine-specific default pricing lookup */
-export function getEnginePricing(_engine: EngineName, model: string): ModelPricing {
+export function getAgentPricing(_agent: AgentName, model: string): ModelPricing {
   return getModelPricing(model);
 }

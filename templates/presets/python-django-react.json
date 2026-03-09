@@ -1,0 +1,32 @@
+{
+  "name": "Python + Django + React",
+  "description": "Python Django backend with React frontend",
+  "agents": [
+    {
+      "agent": "kiro",
+      "model": "claude-sonnet-4.5",
+      "alias": "ceo",
+      "identity": "ceo.md"
+    },
+    {
+      "agent": "codex",
+      "model": "gpt-4o",
+      "alias": "backend",
+      "identity": "python-dev.md",
+      "skills": ["django", "rest-framework"]
+    },
+    {
+      "agent": "claude",
+      "model": "claude-sonnet-4-20250514",
+      "alias": "frontend",
+      "identity": "frontend-react.md",
+      "skills": ["react", "tailwindcss"]
+    },
+    {
+      "agent": "cursor",
+      "model": "claude-sonnet-4",
+      "alias": "qa",
+      "identity": "qa-playwright.md"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "name": "Java Spring + Angular",
+  "description": "Enterprise Java Spring backend with Angular frontend",
+  "agents": [
+    {
+      "agent": "gemini",
+      "model": "gemini-2.0-flash-exp",
+      "alias": "backend",
+      "identity": "java-dev.md"
+    },
+    {
+      "agent": "codex",
+      "model": "gpt-4o",
+      "alias": "frontend",
+      "identity": "frontend-angular.md"
+    }
+  ]
+}

@@ -4,7 +4,7 @@
 
 import { existsSync, readFileSync, openSync, readSync, closeSync, statSync, watch } from "node:fs";
 import { resolveConfig } from "../core/config.js";
-import { parseStreamLine } from "../engines/registry.js";
+import { parseStreamLine } from "../agents/registry.js";
 
 const LOGS_HELP = `
 cliclaw logs — View log entries

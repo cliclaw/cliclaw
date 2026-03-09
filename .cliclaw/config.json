@@ -1,21 +1,65 @@
 {
   "engines": [
     {
-      "engine": "kiro",
-      "model": "claude-sonnet-4.6"
+      "agent": "kiro",
+      "model": "claude-opus-4",
+      "alias": "ceo",
+      "identity": "meta/identity-ceo.md"
+    },
+    {
+      "agent": "claude",
+      "model": "claude-sonnet-4",
+      "alias": "cto",
+      "identity": "meta/identity-cto.md"
+    },
+    {
+      "agent": "kiro",
+      "model": "claude-opus-4",
+      "alias": "staff-engineer",
+      "identity": "meta/identity-staff-engineer.md"
+    },
+    {
+      "agent": "claude",
+      "model": "claude-sonnet-4",
+      "alias": "go-dev",
+      "identity": "meta/identity-go-dev.md"
+    },
+    {
+      "agent": "kiro",
+      "model": "claude-opus-4",
+      "alias": "frontend-svelte",
+      "identity": "meta/identity-frontend-svelte.md",
+      "skills": [
+        "tailwindcss",
+        "daisyui",
+        "svelte-sonner",
+        "skeleton-ui"
+      ]
+    },
+    {
+      "agent": "claude",
+      "model": "claude-sonnet-4",
+      "alias": "mobile-flutter",
+      "identity": "meta/identity-mobile-flutter.md"
+    },
+    {
+      "agent": "cursor",
+      "alias": "qa-playwright",
+      "identity": "meta/identity-qa-playwright.md",
+      "manual": true
     }
   ],
   "tokenBudget": 0,
-  "maxLoop": 500,
+  "maxLoop": 0,
   "maxConsecutiveFailures": 5,
-  "sleepNormal": 1800,
+  "sleepNormal": 60,
   "sleepAfterFailure": 90,
   "agentTimeout": 3600,
   "freshSessionEvery": 3,
-  "maxConcurrent": 2,
+  "maxConcurrent": 3,
   "idleBeforeStart": 0,
   "snapshotEvery": 4,
-  "engineRotateAfter": 3,
+  "agentRotateAfter": 3,
   "stallMax": 10,
   "stallBackoffMultiplier": 1.5,
   "stallBackoffCap": 10,
@@ -38,5 +82,45 @@
     "postCycle": [],
     "onSuccess": [],
     "onFailure": []
+  },
+  "graph": {
+    "ceo": [
+      "cto"
+    ],
+    "cto": [
+      "ceo",
+      "staff-engineer"
+    ],
+    "staff-engineer": [
+      "cto",
+      "go-dev",
+      "frontend-svelte",
+      "mobile-flutter",
+      "qa-playwright"
+    ],
+    "go-dev": [
+      "staff-engineer",
+      "frontend-svelte",
+      "mobile-flutter",
+      "qa-playwright"
+    ],
+    "frontend-svelte": [
+      "staff-engineer",
+      "go-dev",
+      "mobile-flutter",
+      "qa-playwright"
+    ],
+    "mobile-flutter": [
+      "staff-engineer",
+      "go-dev",
+      "frontend-svelte",
+      "qa-playwright"
+    ],
+    "qa-playwright": [
+      "staff-engineer",
+      "go-dev",
+      "frontend-svelte",
+      "mobile-flutter"
+    ]
   }
 }

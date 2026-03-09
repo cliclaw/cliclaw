@@ -2,23 +2,23 @@
  * Core type definitions for CLIClaw
  */
 
-export type EngineName = "kiro" | "claude" | "codex" | "aider" | "gemini" | "copilot" | "cursor";
+export type AgentName = "kiro" | "claude" | "codex" | "gemini" | "copilot" | "cursor";
 
-export interface EngineConfig {
-  name: EngineName;
+export interface AgentConfig {
+  name: AgentName;
   command: string;
   model: string;
   timeout: number;
-  buildArgs: (opts: EngineRunOpts) => string[];
+  buildArgs: (opts: AgentRunOpts) => string[];
   supportsResume: boolean;
   lenientExit: boolean;
-  /** Whether this engine reads prompt from stdin instead of CLI arg */
+  /** Whether this agent reads prompt from stdin instead of CLI arg */
   stdinPrompt: boolean;
   /** Parse raw stdout into human-readable text. Falls back to raw stdout if absent. */
   parseOutput?: (stdout: string) => string;
 }
 
-export interface EngineRunOpts {
+export interface AgentRunOpts {
   prompt: string;
   inputFile: string;
   resume: boolean;
@@ -34,20 +34,61 @@ export interface CycleResult {
   costEstimate: number;
 }
 
-/** A configured engine entry — the primary unit of config */
-export interface EngineEntry {
-  engine: EngineName;
+/** A configured agent entry — the primary unit of config */
+export interface AgentEntry {
+  agent: AgentName;
   model: string;
   alias?: string;
   focus?: string;
-  /** Path to an identity file for this engine (relative to projectRoot). Falls back to meta/identity.md */
+  /** Path to an identity file for this agent (relative to projectRoot). Falls back to meta/identity-ceo.md */
   identity?: string;
+  /** If true, this agent is not run automatically in parallel mode — must be invoked manually */
+  manual?: boolean;
+  /** Skills this agent has learned (e.g., ["tailwindcss", "daisyui"]) */
+  skills?: string[];
+  /** Per-agent sleep interval in seconds between cycles (overrides global sleepNormal) */
+  sleepNormal?: number;
 }
+
+/** Tracker event types */
+export type TrackerEventType = "message" | "task" | "token";
+
+export interface TrackerMessageEvent {
+  type: "message";
+  id: string;
+  from: string;
+  to: string;
+  content: string;
+  timestamp: string;
+  read?: boolean;
+}
+
+export interface TrackerTaskEvent {
+  type: "task";
+  action: "create" | "update" | "delete";
+  task_id: string;
+  agent: string;
+  assignee?: string;
+  title?: string;
+  status?: "todo" | "in_progress" | "done" | "blocked";
+  timestamp: string;
+}
+
+export interface TrackerTokenEvent {
+  type: "token";
+  agent: string;
+  cycle: number;
+  tokens: number;
+  cost: number;
+  timestamp: string;
+}
+
+export type TrackerEvent = TrackerMessageEvent | TrackerTaskEvent | TrackerTokenEvent;
 
 export interface ClawConfig {
   projectRoot: string;
-  /** All configured engines — first is primary */
-  engines: EngineEntry[];
+  /** All configured agents — non-manual agents run in parallel by default */
+  agents: AgentEntry[];
   maxLoop: number;
   maxConsecutiveFailures: number;
   sleepNormal: number;
@@ -59,7 +100,6 @@ export interface ClawConfig {
   promptHeader: string;
   focusFilter: string | null;
   dryRun: boolean;
-  parallel: boolean;
   maxConcurrent: number;
   /** Global token budget per cycle (0 = unlimited) */
   tokenBudget: number;
@@ -70,8 +110,8 @@ export interface ClawConfig {
   idleBeforeStart: number;
   /** How often (in cycles) to save a state snapshot */
   snapshotEvery: number;
-  /** Consecutive failures before rotating to next engine */
-  engineRotateAfter: number;
+  /** Consecutive failures before rotating to next agent */
+  agentRotateAfter: number;
   /** Stall cycles before declaring a stall */
   stallMax: number;
   /** Backoff multiplier per stall cycle (sleep *= multiplier^stallCycles, capped at stallBackoffCap) */
@@ -97,6 +137,34 @@ export interface HooksConfig {
   postCycle: string[];
   onSuccess: string[];
   onFailure: string[];
+}
+
+/** Project config file structure (.cliclaw/config.json) */
+export interface ProjectConfig {
+  agents?: AgentEntry[];
+  graph?: Record<string, string[]>;
+  maxLoop?: number;
+  maxConsecutiveFailures?: number;
+  sleepNormal?: number;
+  sleepAfterFailure?: number;
+  agentTimeout?: number;
+  outputStallTimeout?: number;
+  freshSessionEvery?: number;
+  tokenBudget?: number;
+  maxConcurrent?: number;
+  hooks?: HooksConfig;
+  idleBeforeStart?: number;
+  snapshotEvery?: number;
+  agentRotateAfter?: number;
+  stallMax?: number;
+  stallBackoffMultiplier?: number;
+  stallBackoffCap?: number;
+  hookTimeout?: number;
+  maxSnapshots?: number;
+  promptBudgets?: { memory?: number; you?: number; projects?: number; boundaries?: number; identity?: number; tools?: number; boot?: number };
+  memoryMaxLines?: number;
+  memoryKeepHead?: number;
+  memoryKeepTail?: number;
 }
 
 export interface ClawPaths {
@@ -127,7 +195,7 @@ export interface ClawState {
   totalTokensEstimate?: number;
   totalCostEstimate?: number;
   lastPromptHash?: string;
-  engineRotationIndex?: number;
+  agentRotationIndex?: number;
   [key: string]: string | number | undefined;
 }
 
@@ -149,8 +217,8 @@ export interface LogEntry {
 }
 
 export interface SetupAnswers {
-  engines: EngineName[];
-  models: Record<EngineName, string>;
+  engines: AgentName[];
+  models: Record<AgentName, string>;
   projectRoot: string;
   maxLoop: number;
   sleepNormal: number;
@@ -163,7 +231,8 @@ export interface ModelPricing {
 }
 
 export interface ProjectConfig {
-  engines?: EngineEntry[];
+  engines?: AgentEntry[];
+  graph?: Record<string, string[]>;
   maxLoop?: number;
   maxConsecutiveFailures?: number;
   sleepNormal?: number;
@@ -176,7 +245,7 @@ export interface ProjectConfig {
   hooks?: HooksConfig;
   idleBeforeStart?: number;
   snapshotEvery?: number;
-  engineRotateAfter?: number;
+  agentRotateAfter?: number;
   stallMax?: number;
   stallBackoffMultiplier?: number;
   stallBackoffCap?: number;

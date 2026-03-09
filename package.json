@@ -8,7 +8,7 @@
     "cliclaw": "dist/index.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "node scripts/embed-templates.mjs && tsc",
     "dev": "tsx src/index.ts",
     "cron": "tsx src/index.ts cron",
     "personai": "tsx src/index.ts personai",
@@ -24,5 +24,8 @@
     "tsx": "^4.7.0",
     "typescript": "^5.7.0",
     "vitest": "^4.0.18"
+  },
+  "dependencies": {
+    "@inquirer/prompts": "^7.10.1"
   }
 }

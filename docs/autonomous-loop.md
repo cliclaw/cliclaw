@@ -16,7 +16,7 @@ The cron loop (`src/cli/cron.ts`) is the heart of CLIClaw's autonomous operation
 10. **Memory** — Extract and save any `MEMORY_APPEND` blocks from agent output
 11. **Hooks** — Run `onSuccess`/`onFailure` + `postCycle` scripts
 12. **Sleep** — Adaptive sleep (exponential backoff on stalls, reset on progress)
-13. **Rotate** — Switch to next configured engine after `engineRotateAfter` consecutive failures
+13. **Rotate** — Switch to next configured agent after `agentRotateAfter` consecutive failures
 
 ## Adaptive Sleep
 
@@ -25,9 +25,9 @@ The cron loop (`src/cli/cron.ts`) is the heart of CLIClaw's autonomous operation
 - **Stall detection**: exponential backoff `baseSleep * stallBackoffMultiplier^stallCycles`, capped at `stallBackoffCap`x
 - **Progress resets** the backoff counter
 
-## Engine Rotation
+## Agent Rotation
 
-After `engineRotateAfter` consecutive failures (default 3) with the current engine, CLIClaw rotates to the next engine in the configured `engines` array. This prevents getting stuck when one engine is down or rate-limited.
+After `agentRotateAfter` consecutive failures (default 3) with the current agent, CLIClaw rotates to the next agent in the configured `agents` array. This prevents getting stuck when one agent is down or rate-limited.
 
 ## Output Stall Detection
 
@@ -74,4 +74,4 @@ If you inspect the codebase and find no actionable work this cycle,
 write [SKIP CYCLE] to avoid unnecessary hooks and sleep delay.
 ```
 
-Signals are detected in the parsed text output (after JSON decoding for engines like cursor/claude/gemini), so they work across all engines.
+Signals are detected in the parsed text output (after JSON decoding for agents like cursor/claude/gemini), so they work across all agents.

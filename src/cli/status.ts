@@ -52,10 +52,10 @@ export async function statusCommand(args: string[]): Promise<void> {
   }
 
   // Config
-  const primary = config.engines[0];
-  console.log(`Primary: ${primary?.alias ?? primary?.engine ?? "none"} (${primary?.model ?? "none"})`);
-  if (config.engines.length > 1) {
-    console.log(`Engines: ${config.engines.map((e) => e.alias ?? e.engine).join(", ")}`);
+  const primary = config.agents[0];
+  console.log(`Primary: ${primary?.alias ?? primary?.agent ?? "none"} (${primary?.model ?? "none"})`);
+  if (config.agents.length > 1) {
+    console.log(`Agents: ${config.agents.map((e) => e.alias ?? e.agent).join(", ")}`);
   }
   console.log(`Project: ${config.projectRoot}`);
   console.log(`Token budget: ${config.tokenBudget > 0 ? `${config.tokenBudget} tokens/cycle` : "unlimited"}`);

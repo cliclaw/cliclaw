@@ -19,7 +19,7 @@ cliclaw audit     # Per-cycle cost breakdown
 
 ## Secret Scanning
 
-`src/core/secrets.ts` scans prompts before sending to any engine:
+`src/core/secrets.ts` scans prompts before sending to any agent:
 
 - AWS access keys and secret keys
 - GitHub tokens (`ghp_`, `gho_`, `ghs_`)

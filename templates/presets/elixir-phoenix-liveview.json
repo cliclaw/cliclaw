@@ -1,0 +1,12 @@
+{
+  "name": "Elixir Phoenix + LiveView",
+  "description": "Elixir Phoenix with LiveView real-time UI",
+  "agents": [
+    {
+      "agent": "claude",
+      "model": "claude-sonnet-4-20250514",
+      "alias": "fullstack",
+      "identity": "elixir-dev.md"
+    }
+  ]
+}

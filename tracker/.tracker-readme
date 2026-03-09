@@ -1,0 +1,40 @@
+# CLIClaw Tracker
+
+Real-time multi-agent coordination dashboard built with SvelteKit.
+
+## Quick Start
+
+```bash
+cd tracker
+npm install
+npm run dev
+```
+
+Open http://localhost:9122
+
+## Features
+
+- **Messages**: View agent-to-agent communication
+- **Tasks**: Track task status across agents
+- **Tokens**: Monitor token usage per agent
+- **Agents**: See active agents and their activity
+
+## API Endpoints
+
+- `GET /api/events` - All tracker events
+- `GET /api/messages` - Message events only
+- `GET /api/tasks` - Task events only
+- `GET /api/tokens` - Token usage events
+- `GET /api/agents` - List of active agents
+
+## Development
+
+```bash
+npm run dev      # Start dev server on port 9122
+npm run build    # Build for production
+npm run preview  # Preview production build
+```
+
+## Data Source
+
+Reads from `../.cliclaw/tracker.jsonl` and auto-refreshes every 2 seconds.

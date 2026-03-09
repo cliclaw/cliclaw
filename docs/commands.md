@@ -25,14 +25,14 @@ cliclaw cron [focus] [options]
 
 **Options:**
 
-- `--engine <name>` — Engine to use (kiro, claude, cursor, etc.)
+- `--agent <name>` — Agent to use (kiro, claude, cursor, etc.)
 - `--model <name>` — Model to use
 - `--project-root <path>` — Project root directory
 - `--max-loop <n>` — Max cycles (0 = unlimited)
 - `--sleep <seconds>` — Sleep between cycles
 - `--focus <task>` — Task focus
 - `--dry-run` — Preview prompts without running
-- `--parallel` — Run all configured engines in parallel
+- `all non-manual agents run in parallel by default` — Run all configured agents in parallel
 - `--continue` — Resume from last prompt
 
 **Examples:**
@@ -40,9 +40,9 @@ cliclaw cron [focus] [options]
 ```bash
 cliclaw cron                           # Start with default config
 cliclaw cron "fix tests"               # Focus on specific task
-cliclaw cron --engine=claude           # Use specific engine
+cliclaw cron --agent=claude           # Use specific agent
 cliclaw cron --dry-run                 # Preview mode
-cliclaw cron --parallel --max-loop=5   # Parallel mode, 5 cycles
+cliclaw cron all non-manual agents run in parallel by default --max-loop=5   # Parallel mode, 5 cycles
 ```
 
 ## `cliclaw chat`
@@ -55,14 +55,14 @@ cliclaw chat [options]
 
 **Options:**
 
-- `--engine <name>` — Use specific engine by alias or name
+- `--agent <name>` — Use specific agent by alias or name
 
 **Interface:**
 
 ```
 ╭────────────────────────────────────────────────────────────╮
 │  🤖 CLIClaw Chat                                            │
-│  engine: kiro                                              │
+│  agent: kiro                                              │
 │  history: .cliclaw/tmp/chat-kiro.json                      │
 ╰────────────────────────────────────────────────────────────╯
   Type /help for commands, /exit or Ctrl+C to quit.
@@ -87,13 +87,13 @@ cliclaw chat [options]
 - Memory triggers: "Take note", "Remember...", "Don't forget..."
 - Documentation-only — will not write code
 
-**Per-engine identity files:**
+**Per-agent identity files:**
 
 ```json
 {
-  "engines": [
-    { "engine": "kiro", "identity": ".cliclaw/meta/identity-dev.md" },
-    { "engine": "claude", "identity": ".cliclaw/meta/identity-reviewer.md" }
+  "agents": [
+    { "agent": "kiro", "identity": ".cliclaw/meta/identity-dev.md" },
+    { "agent": "claude", "identity": ".cliclaw/meta/identity-reviewer.md" }
   ]
 }
 ```
@@ -107,7 +107,7 @@ cliclaw setup
 ```
 
 - Detects available AI CLI tools
-- Configures engines and models
+- Configures agents and models
 - Sets up meta files
 - Creates initial configuration
 

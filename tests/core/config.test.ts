@@ -23,7 +23,7 @@ import {
   resolveAliases,
   ALL_ENGINES,
 } from "../src/core/config.js";
-import type { ClawPaths, EngineEntry } from "../src/core/types.js";
+import type { ClawPaths, AgentEntry } from "../src/core/types.js";
 
 let testDir: string;
 
@@ -89,9 +89,9 @@ describe("ensureAllDirs", () => {
 
 describe("resolveAliases", () => {
   it("assigns engine name as alias for unique engines", () => {
-    const engines: EngineEntry[] = [
-      { engine: "kiro", model: "m1" },
-      { engine: "claude", model: "m2" },
+    const engines: AgentEntry[] = [
+      { agent: "kiro", model: "m1" },
+      { agent: "claude", model: "m2" },
     ];
     const result = resolveAliases(engines);
     expect(result[0]?.alias).toBe("kiro");
@@ -99,9 +99,9 @@ describe("resolveAliases", () => {
   });
 
   it("assigns numbered aliases for duplicate engines", () => {
-    const engines: EngineEntry[] = [
-      { engine: "kiro", model: "m1" },
-      { engine: "kiro", model: "m2" },
+    const engines: AgentEntry[] = [
+      { agent: "kiro", model: "m1" },
+      { agent: "kiro", model: "m2" },
     ];
     const result = resolveAliases(engines);
     expect(result[0]?.alias).toBe("kiro1");
@@ -109,9 +109,9 @@ describe("resolveAliases", () => {
   });
 
   it("preserves existing aliases", () => {
-    const engines: EngineEntry[] = [
-      { engine: "kiro", model: "m1", alias: "myalias" },
-      { engine: "kiro", model: "m2" },
+    const engines: AgentEntry[] = [
+      { agent: "kiro", model: "m1", alias: "myalias" },
+      { agent: "kiro", model: "m2" },
     ];
     const result = resolveAliases(engines);
     expect(result[0]?.alias).toBe("myalias");
@@ -122,8 +122,8 @@ describe("resolveAliases", () => {
 describe("resolveConfig", () => {
   it("returns defaults when no config file or env vars", () => {
     const config = resolveConfig({ projectRoot: testDir });
-    expect(config.engines.length).toBeGreaterThan(0);
-    expect(config.engines[0]?.engine).toBe("kiro");
+    expect(config.agents.length).toBeGreaterThan(0);
+    expect(config.agents[0]?.engine).toBe("kiro");
     expect(config.maxLoop).toBe(0);
     expect(config.sleepNormal).toBe(60);
     expect(config.tokenBudget).toBe(8000);
@@ -135,15 +135,15 @@ describe("resolveConfig", () => {
     const paths = buildPaths(testDir);
     ensureAllDirs(paths);
     const projectCfg = {
-      engines: [{ engine: "claude", model: "test-model" }],
+      engines: [{ agent: "claude", model: "test-model" }],
       tokenBudget: 5000,
       maxLoop: 100,
     };
     writeFileSync(paths.configFile, JSON.stringify(projectCfg));
 
     const config = resolveConfig({ projectRoot: testDir });
-    expect(config.engines[0]?.engine).toBe("claude");
-    expect(config.engines[0]?.model).toBe("test-model");
+    expect(config.agents[0]?.engine).toBe("claude");
+    expect(config.agents[0]?.model).toBe("test-model");
     expect(config.tokenBudget).toBe(5000);
     expect(config.maxLoop).toBe(100);
   });
@@ -181,23 +181,23 @@ describe("resolveConfig", () => {
     ensureAllDirs(paths);
     writeFileSync(paths.configFile, "NOT JSON");
     const config = resolveConfig({ projectRoot: testDir });
-    expect(config.engines[0]?.engine).toBe("kiro");
+    expect(config.agents[0]?.engine).toBe("kiro");
   });
 
   it("uses CLICLAW_ENGINE env var for default engine", () => {
     process.env["CLICLAW_ENGINE"] = "claude";
     process.env["CLICLAW_MODEL"] = "my-model";
     const config = resolveConfig({ projectRoot: testDir });
-    expect(config.engines[0]?.engine).toBe("claude");
-    expect(config.engines[0]?.model).toBe("my-model");
+    expect(config.agents[0]?.engine).toBe("claude");
+    expect(config.agents[0]?.model).toBe("my-model");
   });
 
   it("overrides engines from CLI", () => {
     const config = resolveConfig({
       projectRoot: testDir,
-      engines: [{ engine: "gemini", model: "gem-model" }],
+      engines: [{ agent: "gemini", model: "gem-model" }],
     });
-    expect(config.engines[0]?.engine).toBe("gemini");
+    expect(config.agents[0]?.engine).toBe("gemini");
   });
 
   it("reads hooks from project config", () => {
@@ -241,7 +241,7 @@ describe("resolveConfig", () => {
   });
 
   it("sets parallel from overrides", () => {
-    const config = resolveConfig({ projectRoot: testDir, parallel: true });
+    const config = resolveConfig({ projectRoot: testDir, // parallel removed - always parallel now });
     expect(config.parallel).toBe(true);
   });
 
@@ -276,8 +276,8 @@ describe("primaryEngine", () => {
     const config = resolveConfig({
       projectRoot: testDir,
       engines: [
-        { engine: "claude", model: "m1" },
-        { engine: "kiro", model: "m2" },
+        { agent: "claude", model: "m1" },
+        { agent: "kiro", model: "m2" },
       ],
     });
     const primary = primaryEngine(config);
